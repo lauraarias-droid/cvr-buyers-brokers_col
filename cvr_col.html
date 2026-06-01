@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CVR Funnel — ibuyer vs inmo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f11;
+    --surface: #18181c;
+    --surface2: #1f1f25;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0ede8;
+    --muted: #7a7880;
+    --dim: #4a4858;
+    --ib: #5b8fff;
+    --ib-light: #a0bfff;
+    --in: #3ecf8e;
+    --in-light: #7de8b8;
+    --accent: #ff6b6b;
+    --font-sans: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .header-left p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: var(--font-mono);
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    background: var(--surface);
+  }
+  .badge.ib { border-color: rgba(91,143,255,0.3); color: var(--ib-light); background: rgba(91,143,255,0.08); }
+  .badge.in { border-color: rgba(62,207,142,0.3); color: var(--in-light); background: rgba(62,207,142,0.08); }
+
+  /* ── MAIN LAYOUT ── */
+  .main { padding: 32px 40px; max-width: 1200px; }
+
+  /* ── TOGGLE ── */
+  .toggle-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .toggle-btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s;
+    letter-spacing: .01em;
+  }
+  .toggle-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+  .toggle-btn.active { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-color, var(--border2));
+    opacity: 0.6;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--kpi-color, var(--text));
+  }
+  .kpi-delta {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    margin-top: 6px;
+    color: var(--muted);
+  }
+  .kpi-delta .up { color: var(--in); }
+  .kpi-delta .down { color: var(--accent); }
+
+  /* ── CHARTS ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .chart-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .legend-dash {
+    width: 16px; height: 2px;
+    flex-shrink: 0;
+    border-top: 2px dashed;
+  }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* ── DATA TABLE ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  .table-card-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--font-mono);
+  }
+  thead th {
+    padding: 10px 16px;
+    text-align: right;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--dim);
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  thead th:first-child, thead th:nth-child(2) { text-align: left; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 9px 16px; text-align: right; color: var(--muted); }
+  tbody td:first-child { text-align: left; color: var(--text); }
+  tbody td:nth-child(2) { text-align: left; }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .02em;
+  }
+  .pill.ib { background: rgba(91,143,255,0.12); color: var(--ib-light); }
+  .pill.in { background: rgba(62,207,142,0.12); color: var(--in-light); }
+  .cvr-cell { font-weight: 500; }
+  .cvr-cell.ib { color: var(--ib-light); }
+  .cvr-cell.in { color: var(--in-light); }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .footer p { font-size: 11px; font-family: var(--font-mono); color: var(--dim); }
+
+  /* ── EDIT HINT ── */
+  .edit-hint {
+    background: rgba(255,107,107,0.06);
+    border: 1px solid rgba(255,107,107,0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .edit-hint span { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>Funnel CVR — Colombia</h1>
+    <p id="subtitle">últimos 12 meses · jun 2025 – may 2026</p>
+  </div>
+  <div class="header-right">
+    <span class="badge ib">ibuyer</span>
+    <span class="badge in">inmo</span>
+    <span class="badge" id="updated-badge">actualizado: may 2026</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="edit-hint">
+    ✦ <span>Para actualizar: edita el array <code style="color:var(--accent)">DATA</code> al inicio del script, agrega la nueva fila y guarda.</span>
+  </div>
+
+  <div class="toggle-row">
+    <button class="toggle-btn active" onclick="setView('cvr_vo', this)">CVR visita → oferta</button>
+    <button class="toggle-btn" onclick="setView('cvr_oc', this)">CVR oferta → cierre</button>
+    <button class="toggle-btn" onclick="setView('both', this)">Ambos CVR</button>
+    <button class="toggle-btn" onclick="setView('vol', this)">Volumen</button>
+  </div>
+
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title" id="main-chart-title">CVR visita → oferta</span>
+        <div class="chart-legend" id="main-legend"></div>
+      </div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="mainChart" role="img" aria-label="CVR por producto últimos 12 meses"></canvas>
+      </div>
+    </div>
+    <div class="chart-card" id="vol-card">
+      <div class="chart-header">
+        <span class="chart-title">Volumen de visitas por mes</span>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot" style="background:rgba(91,143,255,0.5)"></span>ibuyer</span>
+          <span class="legend-item"><span class="legend-dot" style="background:rgba(62,207,142,0.5)"></span>inmo</span>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="volChart" role="img" aria-label="Volumen de visitas por mes"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">Datos completos</div>
+    <div style="overflow-x:auto">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th>Producto</th>
+            <th>Visitas</th>
+            <th>Ofertas</th>
+            <th>Cierres</th>
+            <th>CVR V→O</th>
+            <th>CVR O→C</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <p>Fuente: papyrus-data.habi_wh_bi.resultados_buyers_v2</p>
+  <p id="footer-date"></p>
+</footer>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  DATOS — ACTUALIZA AQUÍ CADA MES                           ║
+// ║  Agrega una fila nueva al final del array con el formato:  ║
+// ║  { mes:'mmm-aa', ib_vo, ib_oc, in_vo, in_oc,              ║
+// ║    ib_vis, ib_ofe, ib_cie, in_vis, in_ofe, in_cie }       ║
+// ╚══════════════════════════════════════════════════════════════╝
+const DATA = [
+  { mes:'jun-25', ib_vo:8.37, ib_oc:51.96, in_vo:8.04, in_oc:38.85, ib_vis:6715, ib_ofe:562, ib_cie:292, in_vis:1952, in_ofe:157, in_cie:61 },
+  { mes:'jul-25', ib_vo:7.53, ib_oc:48.14, in_vo:8.49, in_oc:26.06, ib_vis:7500, ib_ofe:565, ib_cie:272, in_vis:1943, in_ofe:165, in_cie:43 },
+  { mes:'ago-25', ib_vo:7.45, ib_oc:46.48, in_vo:6.46, in_oc:34.64, ib_vis:7621, ib_ofe:568, ib_cie:264, in_vis:2368, in_ofe:153, in_cie:53 },
+  { mes:'sep-25', ib_vo:8.93, ib_oc:48.30, in_vo:8.37, in_oc:31.90, ib_vis:7234, ib_ofe:646, ib_cie:312, in_vis:2773, in_ofe:232, in_cie:74 },
+  { mes:'oct-25', ib_vo:8.18, ib_oc:46.97, in_vo:7.69, in_oc:34.97, ib_vis:6663, ib_ofe:545, ib_cie:256, in_vis:2379, in_ofe:183, in_cie:64 },
+  { mes:'nov-25', ib_vo:7.44, ib_oc:43.22, in_vo:7.14, in_oc:38.29, ib_vis:6844, ib_ofe:509, ib_cie:220, in_vis:2451, in_ofe:175, in_cie:67 },
+  { mes:'dic-25', ib_vo:10.78, ib_oc:48.48, in_vo:11.41, in_oc:26.40, ib_vis:4880, ib_ofe:526, ib_cie:255, in_vis:1727, in_ofe:197, in_cie:52 },
+  { mes:'ene-26', ib_vo:8.42, ib_oc:47.07, in_vo:6.98, in_oc:32.42, ib_vis:6284, ib_ofe:529, ib_cie:249, in_vis:2608, in_ofe:182, in_cie:59 },
+  { mes:'feb-26', ib_vo:9.43, ib_oc:44.56, in_vo:5.56, in_oc:36.09, ib_vis:6330, ib_ofe:597, ib_cie:266, in_vis:3041, in_ofe:169, in_cie:61 },
+  { mes:'mar-26', ib_vo:6.82, ib_oc:44.68, in_vo:7.77, in_oc:36.97, ib_vis:7718, ib_ofe:526, ib_cie:235, in_vis:2715, in_ofe:211, in_cie:78 },
+  { mes:'abr-26', ib_vo:6.52, ib_oc:45.93, in_vo:5.70, in_oc:39.33, ib_vis:6776, ib_ofe:442, ib_cie:203, in_vis:3122, in_ofe:178, in_cie:70 },
+  { mes:'may-26', ib_vo:6.76, ib_oc:45.97, in_vo:4.95, in_oc:43.13, ib_vis:7533, ib_ofe:509, ib_cie:234, in_vis:4263, in_ofe:211, in_cie:91 },
+];
+
+// ── COLORES ──
+const IB = '#5b8fff', IB_L = '#a0bfff';
+const IN = '#3ecf8e', IN_L = '#7de8b8';
+const GRID = 'rgba(255,255,255,0.05)';
+const TICK = 'rgba(255,255,255,0.3)';
+
+const labels = DATA.map(d => d.mes);
+let currentView = 'cvr_vo';
+let mainChart, volChart;
+
+// ── KPI ──
+function renderKPI(view) {
+  const last = DATA[DATA.length - 1];
+  const prev = DATA[DATA.length - 2];
+  const delta = (a, b) => {
+    const d = (a - b).toFixed(1);
+    const cls = d >= 0 ? 'up' : 'down';
+    return `<span class="${cls}">${d >= 0 ? '+' : ''}${d}pp</span> vs ${prev.mes}`;
+  };
+
+  let cards = [];
+  if (view === 'cvr_vo' || view === 'both') {
+    cards.push({ label: 'ibuyer · V→O (may)', value: last.ib_vo.toFixed(1) + '%', delta: delta(last.ib_vo, prev.ib_vo), color: IB_L, accent: IB });
+    cards.push({ label: 'inmo · V→O (may)', value: last.in_vo.toFixed(1) + '%', delta: delta(last.in_vo, prev.in_vo), color: IN_L, accent: IN });
+  }
+  if (view === 'cvr_oc' || view === 'both') {
+    cards.push({ label: 'ibuyer · O→C (may)', value: last.ib_oc.toFixed(1) + '%', delta: delta(last.ib_oc, prev.ib_oc), color: IB_L, accent: IB });
+    cards.push({ label: 'inmo · O→C (may)', value: last.in_oc.toFixed(1) + '%', delta: delta(last.in_oc, prev.in_oc), color: IN_L, accent: IN });
+  }
+  if (view === 'vol') {
+    cards.push({ label: 'ibuyer visitas (may)', value: last.ib_vis.toLocaleString(), delta: delta(last.ib_vis - prev.ib_vis, 0).replace('pp', ''), color: IB_L, accent: IB });
+    cards.push({ label: 'inmo visitas (may)', value: last.in_vis.toLocaleString(), delta: '', color: IN_L, accent: IN });
+    cards.push({ label: 'ibuyer ofertas (may)', value: last.ib_ofe.toLocaleString(), delta: '', color: IB_L, accent: IB });
+    cards.push({ label: 'inmo ofertas (may)', value: last.in_ofe.toLocaleString(), delta: '', color: IN_L, accent: IN });
+  }
+
+  document.getElementById('kpi-grid').innerHTML = cards.map(c => `
+    <div class="kpi-card" style="--accent-color:${c.accent}">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value" style="--kpi-color:${c.color}">${c.value}</div>
+      ${c.delta ? `<div class="kpi-delta">${c.delta}</div>` : ''}
+    </div>`).join('');
+}
+
+// ── DATASETS ──
+function getDatasets(view) {
+  const base = { tension: 0.35, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2, fill: false };
+  if (view === 'cvr_vo') return [
+    { ...base, label: 'ibuyer', data: DATA.map(d => d.ib_vo), borderColor: IB, pointBackgroundColor: IB, borderDash: [] },
+    { ...base, label: 'inmo',   data: DATA.map(d => d.in_vo), borderColor: IN, pointBackgroundColor: IN, borderDash: [5,3] },
+  ];
+  if (view === 'cvr_oc') return [
+    { ...base, label: 'ibuyer', data: DATA.map(d => d.ib_oc), borderColor: IB, pointBackgroundColor: IB, borderDash: [] },
+    { ...base, label: 'inmo',   data: DATA.map(d => d.in_oc), borderColor: IN, pointBackgroundColor: IN, borderDash: [5,3] },
+  ];
+  if (view === 'both') return [
+    { ...base, label: 'ibuyer V→O', data: DATA.map(d => d.ib_vo), borderColor: IB, pointBackgroundColor: IB, borderDash: [] },
+    { ...base, label: 'inmo V→O',   data: DATA.map(d => d.in_vo), borderColor: IN, pointBackgroundColor: IN, borderDash: [5,3] },
+    { ...base, label: 'ibuyer O→C', data: DATA.map(d => d.ib_oc), borderColor: IB_L, pointBackgroundColor: IB_L, borderDash: [3,2] },
+    { ...base, label: 'inmo O→C',   data: DATA.map(d => d.in_oc), borderColor: IN_L, pointBackgroundColor: IN_L, borderDash: [8,3] },
+  ];
+  if (view === 'vol') return [
+    { type: 'bar', label: 'ibuyer visitas', data: DATA.map(d => d.ib_vis), backgroundColor: 'rgba(91,143,255,0.35)', borderColor: IB, borderWidth: 1 },
+    { type: 'bar', label: 'inmo visitas',   data: DATA.map(d => d.in_vis), backgroundColor: 'rgba(62,207,142,0.35)', borderColor: IN, borderWidth: 1 },
+  ];
+}
+
+// ── LEYENDA ──
+function renderLegend(view) {
+  const items = {
+    cvr_vo: [{c: IB, l: 'ibuyer', dash: false}, {c: IN, l: 'inmo', dash: true}],
+    cvr_oc: [{c: IB, l: 'ibuyer', dash: false}, {c: IN, l: 'inmo', dash: true}],
+    both:   [{c: IB, l: 'ibuyer V→O', dash: false}, {c: IN, l: 'inmo V→O', dash: true}, {c: IB_L, l: 'ibuyer O→C', dash: true}, {c: IN_L, l: 'inmo O→C', dash: true}],
+    vol:    [{c: IB, l: 'ibuyer', dash: false}, {c: IN, l: 'inmo', dash: false}],
+  };
+  document.getElementById('main-legend').innerHTML = (items[view] || []).map(i =>
+    `<span class="legend-item"><span class="${i.dash ? 'legend-dash' : 'legend-dot'}" style="${i.dash ? 'border-top-color:' + i.c : 'background:' + i.c}"></span>${i.l}</span>`
+  ).join('');
+}
+
+// ── TÍTULOS ──
+const TITLES = {
+  cvr_vo: 'CVR visita → oferta por producto',
+  cvr_oc: 'CVR oferta → cierre por producto',
+  both:   'CVR visita→oferta y oferta→cierre',
+  vol:    'Volumen de visitas por mes',
+};
+
+// ── TABLA ──
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  const rows = [];
+  [...DATA].reverse().forEach(d => {
+    rows.push(`<tr>
+      <td>${d.mes}</td><td><span class="pill ib">ibuyer</span></td>
+      <td>${d.ib_vis.toLocaleString()}</td><td>${d.ib_ofe.toLocaleString()}</td><td>${d.ib_cie.toLocaleString()}</td>
+      <td class="cvr-cell ib">${d.ib_vo.toFixed(1)}%</td><td class="cvr-cell ib">${d.ib_oc.toFixed(1)}%</td>
+    </tr>`);
+    rows.push(`<tr>
+      <td>${d.mes}</td><td><span class="pill in">inmo</span></td>
+      <td>${d.in_vis.toLocaleString()}</td><td>${d.in_ofe.toLocaleString()}</td><td>${d.in_cie.toLocaleString()}</td>
+      <td class="cvr-cell in">${d.in_vo.toFixed(1)}%</td><td class="cvr-cell in">${d.in_oc.toFixed(1)}%</td>
+    </tr>`);
+  });
+  tbody.innerHTML = rows.join('');
+}
+
+// ── INIT CHARTS ──
+function initCharts() {
+  const baseOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: TICK, font: { size: 11, family: "'DM Mono'" }, autoSkip: false, maxRotation: 45 }, grid: { color: GRID }, border: { color: 'rgba(255,255,255,0.08)' } },
+      y: { ticks: { color: TICK, font: { size: 11, family: "'DM Mono'" }, callback: v => v + '%' }, grid: { color: GRID }, border: { color: 'rgba(255,255,255,0.08)' }, suggestedMin: 0 }
+    }
+  };
+
+  mainChart = new Chart(document.getElementById('mainChart'), {
+    type: 'line',
+    data: { labels, datasets: getDatasets('cvr_vo') },
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%` } } } }
+  });
+
+  volChart = new Chart(document.getElementById('volChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'ibuyer', data: DATA.map(d => d.ib_vis), backgroundColor: 'rgba(91,143,255,0.35)', borderColor: IB, borderWidth: 1 },
+        { label: 'inmo',   data: DATA.map(d => d.in_vis), backgroundColor: 'rgba(62,207,142,0.35)', borderColor: IN, borderWidth: 1 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}` } } },
+      scales: {
+        x: { ticks: { color: TICK, font: { size: 11, family: "'DM Mono'" }, autoSkip: false, maxRotation: 45 }, grid: { color: GRID }, border: { color: 'rgba(255,255,255,0.08)' } },
+        y: { ticks: { color: TICK, font: { size: 11, family: "'DM Mono'" }, callback: v => v.toLocaleString() }, grid: { color: GRID }, border: { color: 'rgba(255,255,255,0.08)' } }
+      }
+    }
+  });
+}
+
+// ── SET VIEW ──
+function setView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('main-chart-title').textContent = TITLES[view];
+  renderLegend(view);
+  renderKPI(view);
+
+  const isVol = view === 'vol';
+  document.getElementById('vol-card').style.display = isVol ? 'none' : 'block';
+
+  if (mainChart) {
+    const isLine = view !== 'vol';
+    mainChart.config.type = isLine ? 'line' : 'bar';
+    mainChart.data.datasets = getDatasets(view);
+    mainChart.options.scales.y.ticks.callback = isLine ? v => v + '%' : v => v.toLocaleString();
+    mainChart.options.plugins.tooltip = { callbacks: { label: ctx => isLine ? ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%` : ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}` } };
+    mainChart.update();
+  }
+}
+
+// ── FOOTER DATE ──
+document.getElementById('footer-date').textContent = 'generado: ' + new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+
+// ── BOOT ──
+renderKPI('cvr_vo');
+renderLegend('cvr_vo');
+renderTable();
+initCharts();
+</script>
+</body>
+</html>
