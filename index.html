@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CVR Funnel — habi Colombia</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#6825cd;--purple-dark:#4b1a8b;--purple-vivo:#7f2df6;
+  --lavanda:#a566f7;--lavanda-claro:#dbc5fa;
+  --bg:#0e0414;--surface:#1a0a2e;--surface2:#241240;
+  --border:rgba(165,102,247,0.15);--border2:rgba(165,102,247,0.3);
+  --text:#f5f0ff;--muted:#a08dc0;--dim:#5a4870;
+  --red:#ff5c5c;--green:#3de8a0;--font:'Inter',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+body::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:radial-gradient(ellipse 60% 50% at 10% 20%,rgba(104,37,205,0.35) 0%,transparent 60%),
+             radial-gradient(ellipse 40% 40% at 90% 80%,rgba(75,26,139,0.25) 0%,transparent 60%);
+  pointer-events:none;z-index:0;
+}
+.header{
+  position:relative;z-index:1;padding:24px 40px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+  border-bottom:1px solid var(--border);background:rgba(14,4,20,0.8);backdrop-filter:blur(12px);
+}
+.logo-wrap{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px}
+.logo-wordmark{font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.03em;line-height:1}
+.logo-dot{width:7px;height:7px;background:var(--red);border-radius:50%;display:inline-block;margin-left:1px;vertical-align:super}
+.header-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.02em}
+.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;letter-spacing:.03em}
+.badge.ib{background:rgba(61,232,160,0.15);color:#3de8a0;border:1px solid rgba(61,232,160,0.3)}
+.badge.in{background:rgba(165,102,247,0.15);color:var(--lavanda-claro);border:1px solid var(--border2)}
+.badge.date{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid var(--border)}
+.main{position:relative;z-index:1;padding:32px 40px;max-width:1200px}
+.toggle-row{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap}
+.toggle-btn{
+  font-family:var(--font);font-size:12px;font-weight:600;
+  padding:8px 18px;border-radius:24px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.02em;
+}
+.toggle-btn:hover{color:var(--text);border-color:var(--lavanda)}
+.toggle-btn.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:28px}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;
+}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-accent,var(--purple))}
+.kpi-card::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--kpi-glow,rgba(104,37,205,0.2)) 0%,transparent 70%)}
+.kpi-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.kpi-value{font-size:26px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--kpi-color,var(--lavanda-claro))}
+.kpi-delta{font-size:11px;font-weight:600;margin-top:6px;color:var(--muted)}
+.kpi-delta .up{color:var(--green)}.kpi-delta .down{color:var(--red)}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:16px}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.chart-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.01em}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.legend-dash{width:16px;height:0;border-top:2px dashed;flex-shrink:0}
+.chart-wrap{position:relative;width:100%}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:32px}
+.table-header{padding:14px 22px;font-size:12px;font-weight:700;color:var(--lavanda);border-bottom:1px solid var(--border);letter-spacing:.03em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.table-header::before{content:'';width:6px;height:6px;background:var(--purple-vivo);border-radius:50%}
+table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--font)}
+thead th{padding:10px 16px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);border-bottom:1px solid var(--border);font-weight:700;background:var(--surface2)}
+thead th:first-child,thead th:nth-child(2){text-align:left}
+tbody tr{border-bottom:1px solid rgba(165,102,247,0.07);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:9px 16px;text-align:right;color:var(--muted);font-weight:500}
+tbody td:first-child{text-align:left;color:var(--text);font-weight:700}
+tbody td:nth-child(2){text-align:left}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.02em}
+.pill.ib{background:rgba(61,232,160,0.12);color:#3de8a0;border:1px solid rgba(61,232,160,0.2)}
+.pill.in{background:rgba(165,102,247,0.12);color:var(--lavanda-claro);border:1px solid var(--border2)}
+.cvr-ib{color:#3de8a0;font-weight:700}.cvr-in{color:var(--lavanda-claro);font-weight:700}
+.footer{position:relative;z-index:1;padding:16px 40px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;background:rgba(14,4,20,0.9)}
+.footer p{font-size:11px;font-weight:500;color:var(--dim)}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo-wrap">
+    <svg class="logo-icon" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+      <path d="M18 3 L33 16 L33 33 L3 33 L3 16 Z" fill="#6825cd"/>
+      <circle cx="26" cy="10" r="3" fill="#ff5c5c"/>
+      <rect x="13" y="21" width="10" height="12" rx="2" fill="white" opacity="0.9"/>
+    </svg>
+    <div>
+      <div class="logo-wordmark">habi<span class="logo-dot"></span></div>
+      <div class="header-sub">últimos 12 meses · jun 2025 – may 2026</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge ib">ibuyer</span>
+    <span class="badge in">inmo</span>
+    <span class="badge date">actualizado: may 2026</span>
+  </div>
+</header>
+
+<div class="main">
+  <div class="toggle-row">
+    <button class="toggle-btn active" onclick="setView('cvr_vo',this)">CVR visita → oferta</button>
+    <button class="toggle-btn" onclick="setView('cvr_oc',this)">CVR oferta → cierre</button>
+    <button class="toggle-btn" onclick="setView('cvr_vc',this)">CVR visita → cierre</button>
+    <button class="toggle-btn" onclick="setView('both',this)">Todos los CVR</button>
+
+  </div>
+
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title" id="main-chart-title">CVR visita → oferta por producto</span>
+      <div class="chart-legend" id="main-legend"></div>
+    </div>
+    <div class="chart-wrap" style="height:280px">
+      <canvas id="mainChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card" id="vol-card" style="display:none">
+    <div class="chart-header">
+      <span class="chart-title">Volumen por mes</span>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#3de8a0"></span>ib visitas</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#1fb87a"></span>ib ofertas</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#0d7a50"></span>ib cierres</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#a566f7"></span>in visitas</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#6825cd"></span>in ofertas</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#dbc5fa"></span>in cierres</span>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:260px">
+      <canvas id="volChart"></canvas>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">Datos completos</div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Mes</th><th>Producto</th><th>Visitas</th><th>Ofertas</th><th>Cierres</th>
+            <th>CVR V→O</th><th>CVR O→C</th><th>CVR V→C</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>Fuente: papyrus-data.habi_wh_bi.resultados_buyers_v2</p>
+  <p id="footer-date"></p>
+</footer>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  DATOS — ACTUALIZA AQUÍ CADA MES                           ║
+// ╚══════════════════════════════════════════════════════════════╝
+const DATA = [
+  {mes:'jun-25',ib_vo:8.4,ib_oc:52.0,ib_vc:4.3,in_vo:8.0,in_oc:38.9,in_vc:3.1,ib_vis:6715,ib_ofe:562,ib_cie:292,in_vis:1952,in_ofe:157,in_cie:61},
+  {mes:'jul-25',ib_vo:7.5,ib_oc:48.1,ib_vc:3.6,in_vo:8.5,in_oc:26.1,in_vc:2.2,ib_vis:7500,ib_ofe:565,ib_cie:272,in_vis:1943,in_ofe:165,in_cie:43},
+  {mes:'ago-25',ib_vo:7.5,ib_oc:46.5,ib_vc:3.5,in_vo:6.5,in_oc:34.6,in_vc:2.2,ib_vis:7621,ib_ofe:568,ib_cie:264,in_vis:2368,in_ofe:153,in_cie:53},
+  {mes:'sep-25',ib_vo:8.9,ib_oc:48.3,ib_vc:4.3,in_vo:8.4,in_oc:31.9,in_vc:2.7,ib_vis:7234,ib_ofe:646,ib_cie:312,in_vis:2773,in_ofe:232,in_cie:74},
+  {mes:'oct-25',ib_vo:8.2,ib_oc:47.0,ib_vc:3.8,in_vo:7.7,in_oc:35.0,in_vc:2.7,ib_vis:6665,ib_ofe:545,ib_cie:256,in_vis:2377,in_ofe:183,in_cie:64},
+  {mes:'nov-25',ib_vo:7.4,ib_oc:43.2,ib_vc:3.2,in_vo:7.2,in_oc:38.3,in_vc:2.7,ib_vis:6858,ib_ofe:509,ib_cie:220,in_vis:2437,in_ofe:175,in_cie:67},
+  {mes:'dic-25',ib_vo:10.8,ib_oc:48.5,ib_vc:5.2,in_vo:11.5,in_oc:26.4,in_vc:3.0,ib_vis:4888,ib_ofe:526,ib_cie:255,in_vis:1719,in_ofe:197,in_cie:52},
+  {mes:'ene-26',ib_vo:8.4,ib_oc:47.1,ib_vc:4.0,in_vo:7.0,in_oc:31.3,in_vc:2.2,ib_vis:6284,ib_ofe:529,ib_cie:249,in_vis:2608,in_ofe:182,in_cie:57},
+  {mes:'feb-26',ib_vo:9.4,ib_oc:44.6,ib_vc:4.2,in_vo:5.6,in_oc:36.1,in_vc:2.0,ib_vis:6330,ib_ofe:597,ib_cie:266,in_vis:3041,in_ofe:169,in_cie:61},
+  {mes:'mar-26',ib_vo:6.8,ib_oc:44.7,ib_vc:3.0,in_vo:7.8,in_oc:37.0,in_vc:2.9,ib_vis:7718,ib_ofe:526,ib_cie:235,in_vis:2715,in_ofe:211,in_cie:78},
+  {mes:'abr-26',ib_vo:6.5,ib_oc:45.9,ib_vc:3.0,in_vo:5.7,in_oc:39.3,in_vc:2.2,ib_vis:6776,ib_ofe:442,ib_cie:203,in_vis:3122,in_ofe:178,in_cie:70},
+  {mes:'may-26',ib_vo:6.8,ib_oc:46.8,ib_vc:3.2,in_vo:4.9,in_oc:45.0,in_vc:2.2,ib_vis:7533,ib_ofe:509,ib_cie:238,in_vis:4263,in_ofe:211,in_cie:95},
+];
+
+const IB='#3de8a0',IB2='#1fb87a',IN='#a566f7',IN2='#dbc5fa',IN3='#7f2df6';
+const GRID='rgba(165,102,247,0.08)',TICK='rgba(245,240,255,0.35)';
+const labels=DATA.map(d=>d.mes);
+let mainChart,volChart;
+
+function renderKPI(view){
+  const last=DATA[DATA.length-1],prev=DATA[DATA.length-2];
+  const delta=(a,b)=>{const d=(a-b).toFixed(1);const cls=parseFloat(d)>=0?'up':'down';return`<span class="${cls}">${parseFloat(d)>=0?'▲':'▼'} ${Math.abs(d)}pp</span> vs ${prev.mes}`};
+  let cards=[];
+  if(view==='cvr_vo'){
+    cards.push({label:'ibuyer · V→O (may)',value:last.ib_vo.toFixed(1)+'%',delta:delta(last.ib_vo,prev.ib_vo),color:IB,accent:IB,glow:'rgba(61,232,160,0.2)'});
+    cards.push({label:'inmo · V→O (may)',value:last.in_vo.toFixed(1)+'%',delta:delta(last.in_vo,prev.in_vo),color:IN2,accent:IN,glow:'rgba(165,102,247,0.2)'});
+  } else if(view==='cvr_oc'){
+    cards.push({label:'ibuyer · O→C (may)',value:last.ib_oc.toFixed(1)+'%',delta:delta(last.ib_oc,prev.ib_oc),color:IB,accent:IB,glow:'rgba(61,232,160,0.2)'});
+    cards.push({label:'inmo · O→C (may)',value:last.in_oc.toFixed(1)+'%',delta:delta(last.in_oc,prev.in_oc),color:IN2,accent:IN,glow:'rgba(165,102,247,0.2)'});
+  } else if(view==='cvr_vc'){
+    cards.push({label:'ibuyer · V→C (may)',value:last.ib_vc.toFixed(1)+'%',delta:delta(last.ib_vc,prev.ib_vc),color:IB,accent:IB,glow:'rgba(61,232,160,0.2)'});
+    cards.push({label:'inmo · V→C (may)',value:last.in_vc.toFixed(1)+'%',delta:delta(last.in_vc,prev.in_vc),color:IN2,accent:IN,glow:'rgba(165,102,247,0.2)'});
+  } else if(view==='both'){
+    cards.push({label:'ibuyer · V→O',value:last.ib_vo.toFixed(1)+'%',delta:delta(last.ib_vo,prev.ib_vo),color:IB,accent:IB,glow:'rgba(61,232,160,0.2)'});
+    cards.push({label:'inmo · V→O',value:last.in_vo.toFixed(1)+'%',delta:delta(last.in_vo,prev.in_vo),color:IN2,accent:IN,glow:'rgba(165,102,247,0.2)'});
+    cards.push({label:'ibuyer · O→C',value:last.ib_oc.toFixed(1)+'%',delta:delta(last.ib_oc,prev.ib_oc),color:IB,accent:IB2,glow:'rgba(61,232,160,0.15)'});
+    cards.push({label:'inmo · O→C',value:last.in_oc.toFixed(1)+'%',delta:delta(last.in_oc,prev.in_oc),color:IN2,accent:IN3,glow:'rgba(127,45,246,0.2)'});
+    cards.push({label:'ibuyer · V→C',value:last.ib_vc.toFixed(1)+'%',delta:delta(last.ib_vc,prev.ib_vc),color:IB,accent:IB2,glow:'rgba(61,232,160,0.15)'});
+    cards.push({label:'inmo · V→C',value:last.in_vc.toFixed(1)+'%',delta:delta(last.in_vc,prev.in_vc),color:IN2,accent:IN3,glow:'rgba(127,45,246,0.2)'});
+  } else {
+    cards.push({label:'ibuyer visitas (may)',value:last.ib_vis.toLocaleString(),delta:'',color:IB,accent:IB,glow:'rgba(61,232,160,0.2)'});
+    cards.push({label:'inmo visitas (may)',value:last.in_vis.toLocaleString(),delta:'',color:IN2,accent:IN,glow:'rgba(165,102,247,0.2)'});
+    cards.push({label:'ibuyer ofertas (may)',value:last.ib_ofe.toLocaleString(),delta:'',color:IB,accent:IB2,glow:'rgba(61,232,160,0.15)'});
+    cards.push({label:'inmo ofertas (may)',value:last.in_ofe.toLocaleString(),delta:'',color:IN2,accent:IN3,glow:'rgba(127,45,246,0.2)'});
+  }
+  document.getElementById('kpi-grid').innerHTML=cards.map(c=>`
+    <div class="kpi-card" style="--kpi-color:${c.color};--kpi-accent:${c.accent};--kpi-glow:${c.glow}">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value">${c.value}</div>
+      ${c.delta?`<div class="kpi-delta">${c.delta}</div>`:''}
+    </div>`).join('');
+}
+
+function getDatasets(view){
+  const base={tension:0.35,pointRadius:4,pointHoverRadius:7,borderWidth:2.5,fill:false};
+  if(view==='cvr_vo')return[
+    {...base,label:'ibuyer',data:DATA.map(d=>d.ib_vo),borderColor:IB,pointBackgroundColor:IB},
+    {...base,label:'inmo',data:DATA.map(d=>d.in_vo),borderColor:IN,pointBackgroundColor:IN,borderDash:[5,3]},
+  ];
+  if(view==='cvr_oc')return[
+    {...base,label:'ibuyer',data:DATA.map(d=>d.ib_oc),borderColor:IB,pointBackgroundColor:IB},
+    {...base,label:'inmo',data:DATA.map(d=>d.in_oc),borderColor:IN,pointBackgroundColor:IN,borderDash:[5,3]},
+  ];
+  if(view==='cvr_vc')return[
+    {...base,label:'ibuyer',data:DATA.map(d=>d.ib_vc),borderColor:IB,pointBackgroundColor:IB},
+    {...base,label:'inmo',data:DATA.map(d=>d.in_vc),borderColor:IN,pointBackgroundColor:IN,borderDash:[5,3]},
+  ];
+  if(view==='both')return[
+    {...base,label:'ibuyer V→O',data:DATA.map(d=>d.ib_vo),borderColor:IB,pointBackgroundColor:IB},
+    {...base,label:'inmo V→O',data:DATA.map(d=>d.in_vo),borderColor:IN,pointBackgroundColor:IN,borderDash:[5,3]},
+    {...base,label:'ibuyer O→C',data:DATA.map(d=>d.ib_oc),borderColor:IB2,pointBackgroundColor:IB2,borderDash:[3,2]},
+    {...base,label:'inmo O→C',data:DATA.map(d=>d.in_oc),borderColor:IN2,pointBackgroundColor:IN2,borderDash:[8,3]},
+    {...base,label:'ibuyer V→C',data:DATA.map(d=>d.ib_vc),borderColor:'#7fffd4',pointBackgroundColor:'#7fffd4',borderDash:[2,2]},
+    {...base,label:'inmo V→C',data:DATA.map(d=>d.in_vc),borderColor:IN3,pointBackgroundColor:IN3,borderDash:[6,2]},
+  ];
+  return[
+    {type:'bar',label:'ibuyer',data:DATA.map(d=>d.ib_vis),backgroundColor:'rgba(61,232,160,0.25)',borderColor:IB,borderWidth:1},
+    {type:'bar',label:'inmo',data:DATA.map(d=>d.in_vis),backgroundColor:'rgba(165,102,247,0.25)',borderColor:IN,borderWidth:1},
+  ];
+}
+
+function renderLegend(view){
+  const items={
+    cvr_vo:[{c:IB,l:'ibuyer',d:false},{c:IN,l:'inmo',d:true}],
+    cvr_oc:[{c:IB,l:'ibuyer',d:false},{c:IN,l:'inmo',d:true}],
+    cvr_vc:[{c:IB,l:'ibuyer',d:false},{c:IN,l:'inmo',d:true}],
+    both:[{c:IB,l:'ib V→O',d:false},{c:IN,l:'in V→O',d:true},{c:IB2,l:'ib O→C',d:true},{c:IN2,l:'in O→C',d:true},{c:'#7fffd4',l:'ib V→C',d:true},{c:IN3,l:'in V→C',d:true}],
+    vol:[{c:IB,l:'ibuyer',d:false},{c:IN,l:'inmo',d:false}],
+  };
+  document.getElementById('main-legend').innerHTML=(items[view]||[]).map(i=>
+    `<span class="legend-item"><span class="${i.d?'legend-dash':'legend-dot'}" style="${i.d?'border-top-color:'+i.c:'background:'+i.c}"></span>${i.l}</span>`
+  ).join('');
+}
+
+const TITLES={
+  cvr_vo:'CVR visita → oferta por producto',
+  cvr_oc:'CVR oferta → cierre por producto',
+  cvr_vc:'CVR visita → cierre por producto',
+  both:'Todos los CVR por producto',
+  vol:'Volumen de visitas por mes'
+};
+
+function renderTable(){
+  const rows=[];
+  [...DATA].reverse().forEach(d=>{
+    rows.push(`<tr><td>${d.mes}</td><td><span class="pill ib">ibuyer</span></td><td>${d.ib_vis.toLocaleString()}</td><td>${d.ib_ofe.toLocaleString()}</td><td>${d.ib_cie.toLocaleString()}</td><td class="cvr-ib">${d.ib_vo.toFixed(1)}%</td><td class="cvr-ib">${d.ib_oc.toFixed(1)}%</td><td class="cvr-ib">${d.ib_vc.toFixed(1)}%</td></tr>`);
+    rows.push(`<tr><td>${d.mes}</td><td><span class="pill in">inmo</span></td><td>${d.in_vis.toLocaleString()}</td><td>${d.in_ofe.toLocaleString()}</td><td>${d.in_cie.toLocaleString()}</td><td class="cvr-in">${d.in_vo.toFixed(1)}%</td><td class="cvr-in">${d.in_oc.toFixed(1)}%</td><td class="cvr-in">${d.in_vc.toFixed(1)}%</td></tr>`);
+  });
+  document.getElementById('table-body').innerHTML=rows.join('');
+}
+
+function initCharts(){
+  const baseOpts={
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:TICK,font:{size:11,family:'Inter'},autoSkip:false,maxRotation:45},grid:{color:GRID},border:{color:'rgba(165,102,247,0.2)'}},
+      y:{ticks:{color:TICK,font:{size:11,family:'Inter'},callback:v=>v+'%'},grid:{color:GRID},border:{color:'rgba(165,102,247,0.2)'},suggestedMin:0}
+    }
+  };
+  mainChart=new Chart(document.getElementById('mainChart'),{
+    type:'line',data:{labels,datasets:getDatasets('cvr_vo')},
+    options:{...baseOpts,plugins:{...baseOpts.plugins,tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`}}}}
+  });
+  volChart=new Chart(document.getElementById('volChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'ibuyer visitas',data:DATA.map(d=>d.ib_vis),backgroundColor:'rgba(61,232,160,0.35)',borderColor:'#3de8a0',borderWidth:1},
+      {label:'ibuyer ofertas',data:DATA.map(d=>d.ib_ofe),backgroundColor:'rgba(31,184,122,0.5)',borderColor:'#1fb87a',borderWidth:1},
+      {label:'ibuyer cierres',data:DATA.map(d=>d.ib_cie),backgroundColor:'rgba(13,122,80,0.7)',borderColor:'#0d7a50',borderWidth:1},
+      {label:'inmo visitas',data:DATA.map(d=>d.in_vis),backgroundColor:'rgba(165,102,247,0.35)',borderColor:'#a566f7',borderWidth:1},
+      {label:'inmo ofertas',data:DATA.map(d=>d.in_ofe),backgroundColor:'rgba(104,37,205,0.5)',borderColor:'#6825cd',borderWidth:1},
+      {label:'inmo cierres',data:DATA.map(d=>d.in_cie),backgroundColor:'rgba(219,197,250,0.7)',borderColor:'#dbc5fa',borderWidth:1},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`}}},
+      scales:{
+        x:{ticks:{color:TICK,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:GRID},border:{color:'rgba(165,102,247,0.2)'}},
+        y:{ticks:{color:TICK,font:{size:11},callback:v=>v.toLocaleString()},grid:{color:GRID},border:{color:'rgba(165,102,247,0.2)'}}
+      }
+    }
+  });
+}
+
+function setView(view,btn){
+  document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('main-chart-title').textContent=TITLES[view];
+  renderLegend(view);renderKPI(view);
+  document.getElementById('vol-card').style.display=view==='vol'?'none':'block';
+  if(mainChart){
+    mainChart.config.type=view!=='vol'?'line':'bar';
+    mainChart.data.datasets=getDatasets(view);
+    const isLine=view!=='vol';
+    mainChart.options.scales.y.ticks.callback=isLine?v=>v+'%':v=>v.toLocaleString();
+    mainChart.options.plugins.tooltip={callbacks:{label:ctx=>isLine?` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`:` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`}};
+    mainChart.update();
+  }
+}
+
+document.getElementById('footer-date').textContent='generado: '+new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
+renderKPI('cvr_vo');renderLegend('cvr_vo');renderTable();initCharts();
+</script>
+</body>
+</html>
