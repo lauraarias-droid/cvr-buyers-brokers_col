@@ -5,7 +5,7 @@ import io
 
 # ID del Google Sheet
 SHEET_ID = '1mtnoNs_Hn1A0xbdsaFiBBN_ESXEoQT_9-mWPKmYAM6c'
-SHEET_URL = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv'
+SHEET_URL = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1'
 
 # Leer datos del Sheet
 response = requests.get(SHEET_URL)
