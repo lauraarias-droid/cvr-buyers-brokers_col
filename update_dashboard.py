@@ -1,5 +1,7 @@
 import requests
 import re
+import csv
+import io
 
 # ID del Google Sheet
 SHEET_ID = '1mtnoNs_Hn1A0xbdsaFiBBN_ESXEoQT_9-mWPKmYAM6c'
@@ -8,13 +10,21 @@ SHEET_URL = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=cs
 # Leer datos del Sheet
 response = requests.get(SHEET_URL)
 response.encoding = 'utf-8'
-lines = response.text.strip().split('\n')
 
-headers = lines[0].split(',')
-rows = []
-for line in lines[1:]:
-    values = line.split(',')
-    rows.append(dict(zip(headers, values)))
+reader = csv.DictReader(io.StringIO(response.text))
+rows = list(reader)
+
+print("Headers encontrados:", rows[0].keys() if rows else "Sin datos")
+print("Primera fila:", rows[0] if rows else "Sin datos")
+
+# Limpiar headers (quitar espacios y BOM)
+clean_rows = []
+for row in rows:
+    clean_row = {k.strip().lstrip('\ufeff'): v.strip() for k, v in row.items()}
+    clean_rows.append(clean_row)
+
+rows = clean_rows
+print("Headers limpios:", rows[0].keys() if rows else "Sin datos")
 
 # Organizar datos por mes
 data_by_mes = {}
@@ -33,7 +43,7 @@ for row in rows:
 # Ordenar meses cronológicamente
 orden_meses = {'ene':1,'feb':2,'mar':3,'abr':4,'may':5,'jun':6,
                'jul':7,'ago':8,'sep':9,'oct':10,'nov':11,'dic':12}
-meses_ordenados = sorted(data_by_mes.keys(), 
+meses_ordenados = sorted(data_by_mes.keys(),
     key=lambda x: (int('20'+x.split('-')[1]), orden_meses[x.split('-')[0]]))
 
 # Construir array DATA
