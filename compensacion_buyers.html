@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablero Compensación Buyers — Habi COL</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --habi-purple: #5C2D91;
+  --habi-purple-light: #7B4DB5;
+  --habi-purple-pale: #F0E8FA;
+  --habi-purple-mid: #D4B8F0;
+  --habi-green: #00C896;
+  --habi-green-pale: #E0FAF4;
+  --habi-orange: #FF6B35;
+  --habi-orange-pale: #FFF0EB;
+  --habi-red: #E53E3E;
+  --habi-red-pale: #FFF0F0;
+  --habi-yellow: #F6C90E;
+  --habi-yellow-pale: #FFFBE6;
+  --bg: #F7F5FB;
+  --surface: #FFFFFF;
+  --surface2: #F3EEF9;
+  --border: #E5DCF5;
+  --text: #1A0A2E;
+  --text2: #6B5A82;
+  --text3: #9E8FBB;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+/* HEADER */
+.header { background: var(--habi-purple); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark { width: 32px; height: 32px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.logo-mark svg { width: 20px; height: 20px; }
+.logo-text { color: white; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+.header-title { color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 500; }
+.header-badge { background: rgba(255,255,255,0.15); color: white; font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.25); }
+
+/* TABS */
+.tabs-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; gap: 0; }
+.tab-btn { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--text2); padding: 14px 20px; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+.tab-btn:hover { color: var(--habi-purple); }
+.tab-btn.active { color: var(--habi-purple); border-bottom-color: var(--habi-purple); }
+.tab-icon { font-size: 15px; }
+
+/* MAIN */
+.main { max-width: 1200px; margin: 0 auto; padding: 28px 32px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* KPI GRID */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.kpi-card { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--border); }
+.kpi-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+.kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.kpi-card.accent-red .kpi-value { color: var(--habi-red); }
+.kpi-card.accent-purple .kpi-value { color: var(--habi-purple); }
+.kpi-card.accent-green .kpi-value { color: #059669; }
+
+/* SECTION */
+.section-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; margin-top: 24px; }
+.chart-card { background: var(--surface); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+/* LEGEND */
+.legend { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.legend-sq { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.legend-line { width: 18px; height: 2px; flex-shrink: 0; }
+
+/* INSIGHT BOX */
+.insight { border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; line-height: 1.6; margin: 12px 0; }
+.insight.red { background: var(--habi-red-pale); border-left: 3px solid var(--habi-red); color: #7B1A1A; }
+.insight.green { background: var(--habi-green-pale); border-left: 3px solid var(--habi-green); color: #065C47; }
+.insight.purple { background: var(--habi-purple-pale); border-left: 3px solid var(--habi-purple); color: var(--habi-purple); }
+.insight.yellow { background: var(--habi-yellow-pale); border-left: 3px solid var(--habi-yellow); color: #7A5B00; }
+
+/* CONTROLS */
+.ctrl-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.ctrl-label { font-size: 12px; font-weight: 500; color: var(--text2); white-space: nowrap; min-width: 160px; }
+.ctrl-val { font-size: 13px; font-weight: 600; color: var(--habi-purple); min-width: 100px; text-align: right; }
+input[type=range] { flex: 1; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--habi-purple-mid); outline: none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--habi-purple); cursor: pointer; border: 2px solid white; box-shadow: 0 1px 4px rgba(92,45,145,0.3); }
+select { font-family: 'Inter', sans-serif; font-size: 13px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); outline: none; flex: 1; cursor: pointer; }
+select:focus { border-color: var(--habi-purple); }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { text-align: left; padding: 10px 12px; font-weight: 600; color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); background: var(--surface2); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--habi-purple-pale); }
+
+/* BADGE */
+.badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+.b-green { background: var(--habi-green-pale); color: #065C47; }
+.b-red { background: var(--habi-red-pale); color: #7B1A1A; }
+.b-yellow { background: var(--habi-yellow-pale); color: #7A5B00; }
+.b-purple { background: var(--habi-purple-pale); color: var(--habi-purple); }
+
+/* TIMELINE */
+.tl { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: grid; grid-template-columns: 90px 14px 1fr; gap: 0 14px; align-items: start; }
+.tl-date { font-size: 11px; font-weight: 600; color: var(--text3); padding-top: 12px; text-align: right; }
+.tl-spine { display: flex; flex-direction: column; align-items: center; }
+.tl-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 12px; border: 2px solid white; box-shadow: 0 0 0 2px var(--border); }
+.tl-line { width: 2px; flex: 1; min-height: 16px; background: var(--border); }
+.tl-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 10px; }
+.tl-card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.tl-card-body { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.tl-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.tag { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 8px; }
+.tag-red { background: var(--habi-red-pale); color: #7B1A1A; }
+.tag-green { background: var(--habi-green-pale); color: #065C47; }
+.tag-purple { background: var(--habi-purple-pale); color: var(--habi-purple); }
+.tag-yellow { background: var(--habi-yellow-pale); color: #7A5B00; }
+.tag-gray { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+/* FOOTER */
+.footer { background: var(--surface); border-top: 1px solid var(--border); padding: 16px 32px; text-align: center; font-size: 11px; color: var(--text3); }
+
+.dist-btn{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;padding:3px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text2);cursor:pointer}
+.dist-btn.active{background:var(--habi-purple);color:white;border-color:var(--habi-purple)}
+/* RESPONSIVE */
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .grid-2{grid-template-columns:1fr}
+  .grid-3{grid-template-columns:1fr}
+  .main{padding:16px}
+  .tabs-bar{overflow-x:auto;padding:0 16px}
+  .tab-btn{padding:12px 14px;font-size:12px}
+  .header{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 2L3 8V18H8V13H12V18H17V8L10 2Z" fill="#5C2D91"/>
+      </svg>
+    </div>
+    <span class="logo-text">habi</span>
+  </div>
+  <span class="header-title">Análisis de compensación — Buyers Colombia</span>
+  <span class="header-badge">Ene 2024 – Abr 2026</span>
+</header>
+
+<!-- TABS -->
+<nav class="tabs-bar">
+  <button class="tab-btn active" onclick="showTab('resumen')">
+    <span class="tab-icon">📊</span> Resumen general
+  </button>
+  <button class="tab-btn" onclick="showTab('escenarios')">
+    <span class="tab-icon">⚙️</span> Simulador
+  </button>
+  <button class="tab-btn" onclick="showTab('buyers')">
+    <span class="tab-icon">👥</span> Por buyer
+  </button>
+  <button class="tab-btn" onclick="showTab('esquemas')">
+    <span class="tab-icon">📅</span> Esquemas
+  </button>
+</nav>
+
+<main class="main">
+
+<!-- ========== RESUMEN ========== -->
+<div id="tab-resumen" class="panel active">
+
+  <div style="background:var(--habi-purple-pale);border-radius:var(--radius);padding:11px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;border:1px solid var(--habi-purple-mid)">
+    <span style="font-size:15px">👥</span>
+    <span style="font-size:12px;color:var(--habi-purple)"><strong>31 buyers activos en nómina</strong> — todos los números abajo reflejan únicamente su compensación real. Compradores que ya salieron no están incluidos.</span>
+  </div>
+
+  <!-- Fila de scorecards: comisión por cierre en 3 esquemas + desistimiento -->
+  <div class="section-title">¿Cuánto paga cada cierre? — comparado entre esquemas (promedio real buyers activos)</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:8px">
+    <div class="kpi-card" style="border-top:3px solid var(--habi-purple)">
+      <div class="kpi-label">Ene–Jun 2024 · % ticket, umbral 49.5%</div>
+      <div class="kpi-value" style="color:var(--habi-purple)">$701K</div>
+      <div class="kpi-sub">Proporcional al valor. Desde 5–6 ventas recibía algo.</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid var(--habi-orange)">
+      <div class="kpi-label">Jul 2024–Mar 2025 · % ticket, umbral 70%</div>
+      <div class="kpi-value" style="color:var(--habi-orange)">$630K</div>
+      <div class="kpi-sub">Bajo 70% = $0 absoluto. Mismo % pero más exigente.</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid var(--habi-green)">
+      <div class="kpi-label">Últimos 3 meses · Bono fijo (vigente)</div>
+      <div class="kpi-value" style="color:var(--habi-red)">$649K</div>
+      <div class="kpi-sub">Prom. período: $709K* (jalado por meses pico). Abr 2026: $562K ↓</div>
+    </div>
+    <div class="kpi-card accent-red">
+      <div class="kpi-label">Tendencia neta (media móvil 3m)</div>
+      <div class="kpi-value">−12%</div>
+      <div class="kpi-sub">De $739K (Mar 24) a $649K (Abr 26). Caída sostenida.</div>
+    </div>
+  </div>
+  <div class="insight yellow" style="margin-bottom:16px">Los valores de arriba son promedios de meses reales de cada período para los <strong>31 buyers activos</strong>. Para simularlo con ventas y ticket específico, ve a la pestaña <strong>Esquemas</strong>.</div>
+
+  <!-- Gráficas 2x2 -->
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="section-title">Comisión neta por cierre — 31 buyers activos</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-sq" style="background:#5C2D91"></div>% ticket (hasta mar 2025)</div>
+        <div class="legend-item"><div class="legend-sq" style="background:#00C896"></div>Bono fijo (abr 2025+)</div>
+        <div class="legend-item"><div class="legend-line" style="background:#FF6B35;border-top:2px dashed #FF6B35;width:18px;height:2px"></div>Tendencia</div>
+      </div>
+      <div style="position:relative;height:210px"><canvas id="ch-trend"></canvas></div>
+      <div class="insight red" style="margin-top:8px">Abr 2026: <strong>$562K</strong> — mínimo del período. La caída reciente es la señal más clara de deterioro.</div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">% desistimiento mensual — dinero descontado al buyer</div>
+      <div style="position:relative;height:210px"><canvas id="ch-dist"></canvas></div>
+      <div class="insight red" style="margin-top:8px">Feb 2026: <strong>14.3%</strong> · Abr 2026: <strong>14.4%</strong>. Picos crecientes. Cada punto = comisión que se recupera al buyer ese mes.</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:14px">
+    <div class="chart-card">
+      <div class="section-title">Compensación total promedio (básico + variable neto)</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-sq" style="background:#5C2D91"></div>Esquema viejo</div>
+        <div class="legend-item"><div class="legend-sq" style="background:#00C896"></div>Esquema nuevo</div>
+        <div class="legend-item"><div class="legend-line" style="background:#FF6B35;border-top:2px dashed #FF6B35;width:18px;height:2px"></div>Tendencia</div>
+      </div>
+      <div style="position:relative;height:210px"><canvas id="ch-cero"></canvas></div>
+      <div class="insight purple" style="margin-top:8px">La comp total subió porque el equipo creció y cierra más ventas. <strong>No porque cada cierre pague más.</strong> Cuando las ventas bajan — como en abr 2026 — el básico sin ajuste no amortigua.</div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">Básico promedio real vs ajustado por inflación</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-line" style="background:#5C2D91;border-top:2px solid #5C2D91;width:18px;height:2px"></div>Básico nominal</div>
+        <div class="legend-item"><div class="legend-line" style="background:#FF6B35;border-top:2px dashed #FF6B35;width:18px;height:2px"></div>Lo que debería ser (+5.1% prom. anual (DANE))</div>
+      </div>
+      <div style="position:relative;height:210px"><canvas id="ch-basico"></canvas></div>
+      <div class="insight yellow" style="margin-top:8px">En 2025 la brecha es ~<strong>$269K/mes por buyer</strong>. En 2026 ya es ~<strong>$492K/mes</strong>. Para los 31 activos = ~$15M/mes sin ajuste. Calculado con el promedio IPC de los 3 años: ~5.1%/año.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== SIMULADOR ========== -->
+<div id="tab-escenarios" class="panel">
+  <div class="section-title">Simula el impacto de subir el salario base</div>
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="ctrl-row">
+      <span class="ctrl-label">Incremento al básico (COP)</span>
+      <input type="range" min="0" max="1500000" step="50000" value="500000" id="sl-inc" oninput="updateScenario()">
+      <span class="ctrl-val" id="out-inc">$500.000</span>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Buyers activos en nómina</span>
+      <input type="range" min="10" max="60" step="1" value="30" id="sl-buyers" oninput="updateScenario()">
+      <span class="ctrl-val" id="out-buyers">30</span>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Básico promedio actual (COP)</span>
+      <input type="range" min="2500000" max="3500000" step="50000" value="2740000" id="sl-base" oninput="updateScenario()">
+      <span class="ctrl-val" id="out-base">$2.740.000</span>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card accent-purple">
+      <div class="kpi-label">Costo mensual adicional</div>
+      <div class="kpi-value" id="sc-mes">$15M</div>
+      <div class="kpi-sub">Nómina extra por mes</div>
+    </div>
+    <div class="kpi-card accent-purple">
+      <div class="kpi-label">Costo anual adicional</div>
+      <div class="kpi-value" id="sc-ano">$180M</div>
+      <div class="kpi-sub">Proyección 12 meses</div>
+    </div>
+    <div class="kpi-card accent-green">
+      <div class="kpi-label">Nuevo básico promedio</div>
+      <div class="kpi-value" id="sc-nuevo">$3.24M</div>
+      <div class="kpi-sub">Con el incremento</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">% del gasto variable/mes</div>
+      <div class="kpi-value" id="sc-pct">6.4%</div>
+      <div class="kpi-sub">Vs $235M promedio variable</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="section-title">Compensación total por tramo de cumplimiento</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-sq" style="background:#B4B2A9"></div>Sin incremento</div>
+        <div class="legend-item"><div class="legend-sq" style="background:#5C2D91"></div>Con incremento</div>
+        <div class="legend-item"><div class="legend-sq" style="background:#F6C90E"></div>Variable promedio</div>
+      </div>
+      <div style="position:relative;height:240px"><canvas id="ch-scen"></canvas></div>
+    </div>
+    <div>
+      <div class="chart-card" style="margin-bottom:12px">
+        <div class="section-title">Escenarios comparados</div>
+        <div id="sc-tabla"></div>
+      </div>
+      <div class="insight green" id="sc-insight">El incremento de $500.000 representa el 6.4% del gasto variable ya comprometido mensualmente.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== POR BUYER ========== -->
+<div id="tab-buyers" class="panel">
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="ctrl-row">
+      <span class="ctrl-label">Buyer</span>
+      <select id="sel-buyer" onchange="updateBuyerChart()">
+        <option value="all">Todos (promedio del equipo)</option>
+      </select>
+      <span class="ctrl-label" style="min-width:80px;margin-left:8px">Período</span>
+      <select id="sel-period" onchange="updateBuyerChart()" style="flex:0.6">
+        <option value="all">Todo el período</option>
+        <option value="viejo">Esquema viejo (2024 – Mar 2025)</option>
+        <option value="nuevo">Esquema nuevo (Abr 2025+)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Meses activos</div><div class="kpi-value" id="bk-meses">—</div></div>
+    <div class="kpi-card accent-purple"><div class="kpi-label">Cumplimiento promedio</div><div class="kpi-value" id="bk-cump">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total cobrado (variable)</div><div class="kpi-value" id="bk-total">—</div></div>
+    <div class="kpi-card accent-green"><div class="kpi-label">Ventas promedio/mes</div><div class="kpi-value" id="bk-cero">—</div></div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="section-title">Compensación variable mensual</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-sq" style="background:#5C2D91"></div>Esquema viejo</div>
+      <div class="legend-item"><div class="legend-sq" style="background:#00C896"></div>Esquema nuevo</div>
+      <div class="legend-item"><div class="legend-line" style="background:#F6C90E;border-top:2px dashed #F6C90E"></div>Salario base</div>
+    </div>
+    <div style="position:relative;height:260px"><canvas id="ch-buyer"></canvas></div>
+  </div>
+
+  <div class="section-title">Top 10 — mejor compensación variable promedio mensual</div>
+  <div class="chart-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Buyer</th>
+            <th>Meses activos</th>
+            <th>Cumpl. prom.</th>
+            <th>Variable prom./mes</th>
+            <th>Salario base</th>
+            <th>Total prom./mes</th>
+            <th>Ventas prom./mes</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-top-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ESQUEMAS ========== -->
+<div id="tab-esquemas" class="panel">
+  <div class="section-title">Línea de tiempo — evolución del esquema Comercial Buyer</div>
+  <div class="tl">
+    <div class="tl-item">
+      <div class="tl-date">Ene–Jun<br>2024</div>
+      <div class="tl-spine"><div class="tl-dot" style="background:#5C2D91"></div><div class="tl-line"></div></div>
+      <div class="tl-card">
+        <div class="tl-card-title">Modelo original — % sobre ticket de venta</div>
+        <div class="tl-card-body">iBuyer 0.30% + inmo 0.30% del valor vendido. Proporcional al precio del inmueble.</div>
+        <div class="tl-tags">
+          <span class="tag tag-purple">Umbral: desde 49.5%</span>
+          <span class="tag tag-green">Algo desde 5–6 ventas</span>
+          <span class="tag tag-gray">Sin candado inmo</span>
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">Feb<br>2024</div>
+      <div class="tl-spine"><div class="tl-dot" style="background:#7B4DB5"></div><div class="tl-line"></div></div>
+      <div class="tl-card">
+        <div class="tl-card-title">Ajuste — metas diferenciadas por producto</div>
+        <div class="tl-card-body">iBuyer+Alianza Alt 70% / Inmo 30%. Se agrega bono de graduación de brokers $1M c/2 graduados por Q.</div>
+        <div class="tl-tags">
+          <span class="tag tag-purple">Umbral: 49.5%</span>
+          <span class="tag tag-green">Habicredit inmo habi 0.20%</span>
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">Jul<br>2024</div>
+      <div class="tl-spine"><div class="tl-dot" style="background:#FF6B35"></div><div class="tl-line"></div></div>
+      <div class="tl-card" style="border-left:3px solid #FF6B35">
+        <div class="tl-card-title">⚠️ Primer cambio crítico — umbral sube a 70%</div>
+        <div class="tl-card-body">Mismo modelo % ticket, pero bajo 70% = $0 absoluto. Se añade candado inmobiliaria: sin venta inmo el multiplicador máximo es 70%. Se activa bono multibroker.</div>
+        <div class="tl-tags">
+          <span class="tag tag-red">Umbral: 70% o $0</span>
+          <span class="tag tag-red">Candado inmo activo</span>
+          <span class="tag tag-yellow">Necesita 7–9 ventas mín.</span>
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">Oct<br>2024</div>
+      <div class="tl-spine"><div class="tl-dot" style="background:#F6C90E"></div><div class="tl-line"></div></div>
+      <div class="tl-card">
+        <div class="tl-card-title">Ajuste — igual proporción iBuyer e inmo, tope 150%</div>
+        <div class="tl-card-body">Meta en igual proporción iBuyer e inmo. Bono rojos pasa a naranja $500K. Tope individual 150%.</div>
+        <div class="tl-tags">
+          <span class="tag tag-red">Umbral: 70%</span>
+          <span class="tag tag-yellow">Tope 150%</span>
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">Abr<br>2025</div>
+      <div class="tl-spine"><div class="tl-dot" style="background:#E53E3E"></div><div class="tl-line"></div></div>
+      <div class="tl-card" style="border-left:3px solid #E53E3E">
+        <div class="tl-card-title">🔄 Cambio estructural — abandona % ticket, adopta bono fijo por tramo</div>
+        <div class="tl-card-body">Ya no importa el valor del ticket. Bono en escalones: $0 / $3.5M / $6M / $8.5M. Para ganar lo mismo que antes necesita MÁS ventas porque perdió la proporcionalidad al valor.</div>
+        <div class="tl-tags">
+          <span class="tag tag-red">Umbral: 70% o $0</span>
+          <span class="tag tag-red">Ingreso en saltos bruscos</span>
+          <span class="tag tag-yellow">Meta baja: $400K/venta</span>
+          <span class="tag tag-green">Sobrecumplimiento escalonado</span>
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">Feb<br>2026</div>
+      <div class="tl-spine"><div class="tl-dot" style="background:#F6C90E"></div><div class="tl-line"></div></div>
+      <div class="tl-card">
+        <div class="tl-card-title">Ajuste — candado inmo regresa, Barranquilla desde 50%</div>
+        <div class="tl-card-body">Mismos tramos. Candado inmobiliaria reactivado: Bogotá/Cali/Bquilla mín 1 inmo, Medellín mín 2. Habi Capital nuevo bono.</div>
+        <div class="tl-tags">
+          <span class="tag tag-red">Candado inmo vuelve</span>
+          <span class="tag tag-green">Bquilla desde 50%</span>
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">May<br>2026</div>
+      <div class="tl-spine"><div class="tl-dot" style="background:#00C896"></div><div class="tl-line" style="opacity:0"></div></div>
+      <div class="tl-card" style="border-left:3px solid #00C896">
+        <div class="tl-card-title">✅ Vigente — bonos base suben ~16%, umbral baja a 64%</div>
+        <div class="tl-card-body">Tramos: $3.9M / $7.2M / $9.9M. Umbral baja a 64% (Bquilla 60%). Medellín mín 3 ventas inmo. Habi Capital activo.</div>
+        <div class="tl-tags">
+          <span class="tag tag-green">Umbral: 64% (-6pp)</span>
+          <span class="tag tag-green">Bonos +16%</span>
+          <span class="tag tag-red">Medellín candado más estricto</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:28px">Comparativo interactivo — mismo cumplimiento, diferente ingreso según esquema</div>
+  <div class="chart-card">
+    <div class="ctrl-row">
+      <span class="ctrl-label">% de cumplimiento</span>
+      <input type="range" min="0" max="150" step="1" value="85" id="sl-cump" oninput="updateEsquema()">
+      <span class="ctrl-val" id="out-cump">85%</span>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Ventas realizadas</span>
+      <input type="range" min="0" max="22" step="1" value="10" id="sl-ventas" oninput="updateEsquema()">
+      <span class="ctrl-val" id="out-ventas">10</span>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Ticket promedio (millones COP)</span>
+      <input type="range" min="100" max="600" step="10" value="300" id="sl-ticket" oninput="updateEsquema()">
+      <span class="ctrl-val" id="out-ticket">$300M</span>
+    </div>
+    <div class="grid-3" id="esq-cards" style="margin:16px 0"></div>
+    <div style="position:relative;height:220px"><canvas id="ch-esq"></canvas></div>
+    <div class="insight yellow" id="esq-insight" style="margin-top:12px"></div>
+  </div>
+</div>
+
+</main>
+
+<footer class="footer">
+  Habi Colombia · Análisis de compensación Buyers · Datos: Ene 2024 – Abr 2026 · Solo comerciales COL (excluye MX)
+</footer>
+
+<script>
+// RAW: [mes, nombre, ventas, cumpl, pago, desist, salario]
+const RAW=[["2024-01-01","michaelgomez",7,115,7211376,2782000],["2024-01-01","andresgomez",5,87.5,5391996,3745000],["2024-01-01","jennifersabogal",10,130,13561003,3672240],["2024-01-01","caterinsierra",3,58,1248280,2500000],["2024-01-01","vivianachacon",10,105,10437630,3957342],["2024-01-01","juansalamanca",9,115,6560982,2500000],["2024-01-01","linaborda",6,60,2729653,2939739],["2024-01-01","mariocardenas",2,100,844050,2500000],["2024-01-01","cindybacca",10,130,8581451,2675000],["2024-01-01","juanbeltran",5,68.3,3042900,2500000],["2024-01-01","leonardosanchez",6,65,4113312,2652000],["2024-01-01","johnaranda",11,110,6102655,4119500],["2024-01-01","ladymerchan",11,110,9821405,3103000],["2024-01-01","nataliepreciado",6,65,4527694,3630000],["2024-01-01","oscarcuervo",12,115,9997335,2675000],["2024-01-01","andreapinzon",13,130,14716392,2500000],["2024-01-01","juanpiza",7,70,6461828,2500000],["2024-01-01","daniellaballesteros",1,100,665900,2500000],["2024-01-01","danieluseche",9,130,9127185,2500000],["2024-01-01","juliethariza",6,88.3,4741040,2500000],["2024-01-01","davidrincon",5,80,5187840,2500000],["2024-01-01","wilsonpedreros",9,95,5560085,2500000],["2024-01-01","jojhannparra",9,90,5564540,2782000],["2024-01-01","heidymarin",2,75,720000,2500000],["2024-01-01","durleyelejalde",15,130,14761975,2942500],["2024-01-01","jorgearboleda",10,105,11604587,4344200],["2024-01-01","edilbertotoro",8,93.3,9010820,2750000],["2024-01-01","diegoramirezf",7,75,5093063,2500000],["2024-01-01","sindyrincon",12,110,11587186,3103000],["2024-01-01","deymerramirez",8,96.7,7015472,2500000],["2024-01-01","elainerodriguez",6,85,4642725,2958000],["2024-02-01","michaelgomez",7,70,4876103,2782000],["2024-02-01","andresgomez",14,105,11608405,3745000],["2024-02-01","jennifersabogal",12,130,16772055,3672240],["2024-02-01","caterinsierra",5,50,2178420,2500000],["2024-02-01","vivianachacon",12,125,13777528,3957342],["2024-02-01","juansalamanca",2,20,3208057,2500000],["2024-02-01","linaborda",11,130,11142675,2939739],["2024-02-01","mariocardenas",1,33.3,645000,2500000],["2024-02-01","cindybacca",8,85,8746013,2675000],["2024-02-01","juanbeltran",2,20,1041200,2500000],["2024-02-01","leonardosanchez",8,80,5480404,2652000],["2024-02-01","johnaranda",13,120,10535170,4119500],["2024-02-01","ladymerchan",14,130,8915847,3103000],["2024-02-01","nataliepreciado",11,130,6765058,3630000],["2024-02-01","oscarcuervo",9,100,7239261,2675000],["2024-02-01","andreapinzon",4,56,8571058,2500000],["2024-02-01","juanpiza",9,108.3,9773445,2500000],["2024-02-01","daniellaballesteros",1,50,592940,2500000],["2024-02-01","danieluseche",8,90,6182385,2500000],["2024-02-01","juliethariza",6,65,3781720,2500000],["2024-02-01","davidrincon",7,85,3563952,2500000],["2024-02-01","johannaespitia",7,70,3013500,2500000],["2024-02-01","wilsonpedreros",5,55,2599083,2500000],["2024-02-01","jojhannparra",8,85,4229487,2782000],["2024-02-01","heidymarin",4,100,1699750,2500000],["2024-02-01","durleyelejalde",12,120,9650515,2942500],["2024-02-01","jorgearboleda",18,120,18927520,4344200],["2024-02-01","edilbertotoro",7,75,5963570,2750000],["2024-02-01","diegoramirezf",8,80,5463058,2500000],["2024-02-01","sindyrincon",12,120,13879565,3103000],["2024-02-01","deymerramirez",9,108.3,6985916,2500000],["2024-02-01","elainerodriguez",8,105,5718662,2958000],["2024-03-01","michaelgomez",12,120,7313375,2782000],["2024-03-01","andresgomez",10,123.3,6594445,3745000],["2024-03-01","jennifersabogal",5,65,9728405,3672240],["2024-03-01","caterinsierra",1,11.7,569600,2500000],["2024-03-01","vivianachacon",5,61.7,4235133,3957342],["2024-03-01","juansalamanca",7,85,5904185,2500000],["2024-03-01","linaborda",10,130,7547246,2939739],["2024-03-01","cindybacca",7,85,5376650,2675000],["2024-03-01","juanbeltran",1,11.7,1369780,2500000],["2024-03-01","leonardosanchez",5,61.7,3021333,2652000],["2024-03-01","johnaranda",9,108.3,6090623,4119500],["2024-03-01","ladymerchan",8,96.7,5912615,3103000],["2024-03-01","nataliepreciado",6,73.3,4440685,3630000],["2024-03-01","oscarcuervo",15,130,10904406,2675000],["2024-03-01","andreapinzon",9,130,10946304,2500000],["2024-03-01","juanpiza",9,103.3,4366205,2500000],["2024-03-01","danieluseche",9,111.7,8839318,2500000],["2024-03-01","daniellaballesteros",3,100,2420648,2500000],["2024-03-01","juliethariza",5,61.7,1614345,2500000],["2024-03-01","davidrincon",2,26.7,1684500,2500000],["2024-03-01","johannaespitia",6,70,4023450,2500000],["2024-03-01","wilsonpedreros",6,73.3,2856360,2500000],["2024-03-01","jojhannparra",4,50,1112350,2782000],["2024-03-01","heidymarin",2,44,1432000,2500000],["2024-03-01","durleyelejalde",11,115,10872823,2942500],["2024-03-01","jorgearboleda",11,115,17008623,4344200],["2024-03-01","diegoramirezf",6,70,6390858,2500000],["2024-03-01","sindyrincon",11,120,11492451,2500000],["2024-03-01","deymerramirez",8,96.7,4466606,2500000],["2024-03-01","elainerodriguez",6,76.7,3378442,2958000],["2024-04-01","michaelgomez",7,75,5780615,2782000],["2024-04-01","andresgomez",7,80,6382827,3745000],["2024-04-01","jennifersabogal",11,105,12193843,3672240],["2024-04-01","caterinsierra",6,60,2102600,2500000],["2024-04-01","vivianachacon",10,110,12958150,3957342],["2024-04-01","linaborda",9,130,7458856,2939739],["2024-04-01","cindybacca",7,80,3949960,2675000],["2024-04-01","leonardosanchez",4,45,793400,2652000],["2024-04-01","johnaranda",14,120,10881662,4119500],["2024-04-01","ladymerchan",8,85,7514475,3103000],["2024-04-01","nataliepreciado",9,95,5032248,3630000],["2024-04-01","oscarcuervo",15,105,17525648,2675000],["2024-04-01","andreapinzon",9,100,12541848,2500000],["2024-04-01","juanpiza",9,95,8190563,2500000],["2024-04-01","danieluseche",9,100,7148537,2500000],["2024-04-01","daniellaballesteros",3,75,2171225,2500000],["2024-04-01","davidrincon",9,85,4242375,2500000],["2024-04-01","johannaespitia",9,95,5243038,2500000],["2024-04-01","wilsonpedreros",8,85,3795755,2500000],["2024-04-01","jojhannparra",6,75,3328728,2782000],["2024-04-01","heidymarin",3,42,0,2500000],["2024-04-01","durleyelejalde",11,120,14130312,2942500],["2024-04-01","jorgearboleda",18,105,20974913,4344200],["2024-04-01","edilbertotoro",9,130,10244838,2750000],["2024-04-01","diegoramirezf",4,40,790700,2500000],["2024-04-01","sindyrincon",12,120,12781065,2500000],["2024-04-01","deymerramirez",8,100,3815293,2500000],["2024-04-01","elainerodriguez",8,96.7,6591617,2958000],["2024-04-01","juansalamanca",8,95,6349432,2500000],["2024-05-01","caterinsierra",4,45,329400,2500000],["2024-05-01","daniellaballesteros",4,46.7,427500,2500000],["2024-05-01","heidymarin",4,65,1210000,2500000],["2024-05-01","danieluseche",5,60,1597550,2500000],["2024-05-01","johnaranda",5,50,2382485,4119500],["2024-05-01","ladymerchan",6,68.3,2888948,3103000],["2024-05-01","johannaespitia",7,75,3327675,2500000],["2024-05-01","diegoramirezf",8,80,4439800,2500000],["2024-05-01","nataliepreciado",9,105,3964078,3630000],["2024-05-01","andresgomez",6,70,3770705,3745000],["2024-05-01","leonardosanchez",9,90,3891025,2652000],["2024-05-01","deymerramirez",8,85,5246642,2500000],["2024-05-01","linaborda",5,86,4404741,2939739],["2024-05-01","edilbertotoro",6,65,4965695,2750000],["2024-05-01","juliethariza",8,85,4838723,2500000],["2024-05-01","davidrincon",6,70,4194933,2500000],["2024-05-01","juansalamanca",10,105,4908720,2500000],["2024-05-01","sindyrincon",6,65,5208960,2500000],["2024-05-01","juanpiza",8,95,6570163,2630000],["2024-05-01","elainerodriguez",6,115,8133553,2958000],["2024-05-01","wilsonpedreros",10,110,7500975,2500000],["2024-05-01","cindybacca",15,130,8760010,2675000],["2024-05-01","mariocardenas",8,93.3,8269880,2500000],["2024-05-01","jojhannparra",14,130,9561113,2782000],["2024-05-01","oscarcuervo",16,130,10551493,2814100],["2024-05-01","michaelgomez",15,130,10732110,2782000],["2024-05-01","jorgearboleda",7,130,11116610,4570100],["2024-05-01","carlosdavila",15,130,12211175,2500000],["2024-05-01","vivianachacon",12,105,11370223,3957342],["2024-05-01","durleyelejalde",11,120,11516600,3095600],["2024-05-01","andreapinzon",11,120,11933130,2500000],["2024-05-01","jennifersabogal",12,120,13795954,3672240],["2024-06-01","michaelgomez",13,130,8794020,2782000],["2024-06-01","andresgomez",10,130,8117000,3745000],["2024-06-01","jennifersabogal",12,111.25,11643984,3672240],["2024-06-01","caterinsierra",2,17.5,115600,2500000],["2024-06-01","danieluseche",9,97.5,4719806,2500000],["2024-06-01","vivianachacon",10,115,8469820,3957342],["2024-06-01","juansalamanca",12,117.5,9868781,2500000],["2024-06-01","linaborda",7,105,4373063,2939739],["2024-06-01","mariocardenas",6,70,2651220,2500000],["2024-06-01","cindybacca",8,76.25,4730044,2675000],["2024-06-01","leonardosanchez",10,130,5211915,2652000],["2024-06-01","johnaranda",8,76.25,5414646,4119500],["2024-06-01","ladymerchan",12,97.5,7667868,3103000],["2024-06-01","nataliepreciado",7,71.25,4250067,3630000],["2024-06-01","oscarcuervo",11,108.75,7592292,2814100],["2024-06-01","andreapinzon",9,91.25,7260206,2500000],["2024-06-01","carlosdavila",10,106.25,9403022,2500000],["2024-06-01","juanpiza",7,61.25,1889325,2630000],["2024-06-01","heidymarin",2,17.5,267600,2500000],["2024-06-01","durleyelejalde",10,100,10646800,3095600],["2024-06-01","jorgearboleda",6,65,4969925,4570100],["2024-06-01","daniellaballesteros",4,46.7,0,2500000],["2024-06-01","edilbertotoro",10,97.5,6242006,2750000],["2024-06-01","wilsonpedreros",6,58.75,2296570,2500000],["2024-06-01","diegoramirezf",6,58.75,2702600,2500000],["2024-06-01","sindyrincon",8,82.5,2932890,2500000],["2024-06-01","deymerramirez",6,60,2149525,2500000],["2024-06-01","elainerodriguez",11,110,9061150,2958000],["2024-06-01","angiegarcia",5,130,2487720,2630000],["2024-07-01","michaelgomez",10,150,11612200,2782000],["2024-07-01","andresgomez",7,70,5337750,3745000],["2024-07-01","caterinsierra",7,70,3095590,2500000],["2024-07-01","danieluseche",9,70,4961644,2500000],["2024-07-01","juansalamanca",9,90,7418134,2500000],["2024-07-01","cindybacca",9,90,7378589,2675000],["2024-07-01","leonardosanchez",10,100,6747870,2652000],["2024-07-01","johnaranda",7,70,3463275,4119500],["2024-07-01","ladymerchan",12,133.3,5461681,3103000],["2024-07-01","oscarcuervo",19,150,9934610,2814100],["2024-07-01","andreapinzon",9,90,5581721,2500000],["2024-07-01","carlosdavila",9,90,7938844,2500000],["2024-07-01","angiegarcia",5,100,2563200,2630000],["2024-07-01","juanpiza",3,0,1191350,2630000],["2024-07-01","heidymarin",12,120,12688900,2500000],["2024-07-01","durleyelejalde",11,110,15684600,3095600],["2024-07-01","jorgearboleda",17,150,25231275,4570100],["2024-07-01","daniellaballesteros",9,70,3086445,2500000],["2024-07-01","juliethariza",9,90,4875000,2500000],["2024-07-01","carolinagonzalez",7,87.5,2413306,2500000],["2024-07-01","wilsonpedreros",9,90,5223289,2500000],["2024-07-01","diegoramirezf",7,70,3302800,2500000],["2024-07-01","deymerramirez",6,85.7,3974836,2500000],["2024-07-01","elainerodriguez",11,110,10864550,2958000],["2024-08-01","michaelgomez",15,136.4,15530296,2782000],["2024-08-01","andresgomez",11,100,7265895,3745000],["2024-08-01","jennifersabogal",18,150,20481837,3672240],["2024-08-01","caterinsierra",8,70,5282857,2500000],["2024-08-01","danieluseche",11,100,7620751,2500000],["2024-08-01","vivianachacon",14,127.3,9815216,3957342],["2024-08-01","juansalamanca",10,90.9,8992341,2500000],["2024-08-01","cindybacca",13,118.2,10523548,2675000],["2024-08-01","leonardosanchez",13,118.2,10070745,2652000],["2024-08-01","johnaranda",14,127.3,9919279,4119500],["2024-08-01","jojhannparra",8,72.7,2032509,2782000],["2024-08-01","ladymerchan",12,109.1,8363205,3103000],["2024-08-01","nataliepreciado",9,81.8,5133464,3630000],["2024-08-01","oscarcuervo",10,90.9,8362628,2814100],["2024-08-01","andreapinzon",12,133.3,11773944,2500000],["2024-08-01","angiegarcia",4,57.1,1445314,2630000],["2024-08-01","juanpiza",8,80,4058600,2630000],["2024-08-01","durleyelejalde",9,90,9600650,3095600],["2024-08-01","jorgearboleda",15,150,29302575,4570100],["2024-08-01","iancardona",6,100,4743500,2500000],["2024-08-01","daniellaballesteros",8,72.7,3352973,2500000],["2024-08-01","juliethariza",8,72.7,3583785,2500000],["2024-08-01","carolinagonzalez",9,81.8,6716686,2500000],["2024-08-01","wilsonpedreros",6,70,5085609,2500000],["2024-08-01","diegoramirezf",11,100,6224850,2500000],["2024-08-01","deymerramirez",10,90.9,6745779,2500000],["2024-08-01","elainerodriguez",9,81.8,8107618,2958000],["2024-09-01","michaelgomez",13,108.3,12226163,2782000],["2024-09-01","andresgomez",11,91.7,7771950,3745000],["2024-09-01","jennifersabogal",9,150,12319208,3672240],["2024-09-01","caterinsierra",11,91.7,6964865,2500000],["2024-09-01","danieluseche",9,75,5380725,2500000],["2024-09-01","vivianachacon",8,150,8505476,3957342],["2024-09-01","juansalamanca",11,91.7,7503115,2500000],["2024-09-01","cindybacca",12,100,7435318,2675000],["2024-09-01","luisaloaiza",4,100,1905500,2630000],["2024-09-01","leonardosanchez",9,75,6040838,2652000],["2024-09-01","johnaranda",12,70,5540916,4119500],["2024-09-01","jojhannparra",8,0,278182,2782000],["2024-09-01","ladymerchan",9,75,6000900,3103000],["2024-09-01","nataliepreciado",5,0,1037224,3630000],["2024-09-01","oscarcuervo",11,91.7,5954668,2814100],["2024-09-01","andreapinzon",11,91.7,8322138,2500000],["2024-09-01","angiegarcia",9,75,6778197,2630000],["2024-09-01","juanpiza",15,136.4,14612642,2630000],["2024-09-01","heidymarin",9,75,6400438,2500000],["2024-09-01","durleyelejalde",12,100,13161300,3095600],["2024-09-01","jorgearboleda",11,91.7,10330500,4570100],["2024-09-01","iancardona",4,0,631500,2500000],["2024-09-01","daniellaballesteros",7,0,2615453,2500000],["2024-09-01","juliethariza",6,85.7,1777977,2500000],["2024-09-01","leidychitiva",5,100,2474300,2500000],["2024-09-01","carolinagonzalez",11,91.7,6330123,2500000],["2024-09-01","wilsonpedreros",10,83.3,4004563,2500000],["2024-09-01","diegoramirezf",3,0,777450,2500000],["2024-09-01","sindyrincon",11,110,6803637,2500000],["2024-09-01","deymerramirez",4,0,571364,2500000],["2024-09-01","elainerodriguez",14,116.7,13691849,2958000],["2024-10-01","michaelgomez",6,0,1127750,2782000],["2024-10-01","andresgomez",12,109.1,7915972,3745000],["2024-10-01","jennifersabogal",15,136.4,15881445,3672240],["2024-10-01","caterinsierra",6,0,1277375,2500000],["2024-10-01","danieluseche",11,100,6190775,2500000],["2024-10-01","vivianachacon",14,127.3,15472236,3957342],["2024-10-01","juansalamanca",4,0,867901,2500000],["2024-10-01","mariocardenas",8,72.7,3064291,2500000],["2024-10-01","cindybacca",10,150,8290850,2675000],["2024-10-01","luisaloaiza",5,83.3,2412500,2630000],["2024-10-01","leonardosanchez",13,118.2,8183847,2652000],["2024-10-01","johnaranda",5,0,1310333,4119500],["2024-10-01","jojhannparra",14,127.3,11490682,2782000],["2024-10-01","ladymerchan",5,0,189000,3103000],["2024-10-01","nataliepreciado",9,81.8,5019727,3630000],["2024-10-01","oscarcuervo",20,150,11919282,2814100],["2024-10-01","andreapinzon",14,127.3,13217548,2500000],["2024-10-01","angiegarcia",9,81.8,6672643,2630000],["2024-10-01","juanpiza",8,72.7,5200091,2630000],["2024-10-01","heidymarin",9,81.8,7769529,2500000],["2024-10-01","durleyelejalde",8,72.7,8553495,3095600],["2024-10-01","jorgearboleda",12,109.1,11732261,4570100],["2024-10-01","iancardona",5,83.3,2306250,2500000],["2024-10-01","daniellaballesteros",2,0,267225,2500000],["2024-10-01","edilbertotoro",11,100,7331600,2750000],["2024-10-01","carolinagonzalez",4,0,904988,2500000],["2024-10-01","wilsonpedreros",10,90.9,3837886,2500000],["2024-10-01","diegoramirezf",7,77.8,2100117,2500000],["2024-10-01","sindyrincon",10,90.9,4342030,2500000],["2024-10-01","deymerramirez",9,81.8,5657319,2500000],["2024-10-01","elainerodriguez",11,100,13191000,2958000],["2024-11-01","michaelgomez",14,127.3,8074966,2782000],["2024-11-01","andresgomez",12,109.1,11434364,3745000],["2024-11-01","jennifersabogal",15,136.4,18234568,3672240],["2024-11-01","caterinsierra",4,0,384313,2500000],["2024-11-01","danieluseche",13,118.2,6167650,2500000],["2024-11-01","vivianachacon",10,90.9,8571908,3957342],["2024-11-01","juansalamanca",10,90.9,6624432,2500000],["2024-11-01","mariocardenas",9,81.8,4839263,2500000],["2024-11-01","cindybacca",14,127.3,10152659,2675000],["2024-11-01","luisaloaiza",5,83.3,2066542,2630000],["2024-11-01","leonardosanchez",15,136.4,12300265,2652000],["2024-11-01","rubenhernandez",9,70,3596695,2500000],["2024-11-01","johnaranda",13,70,5535497,4119500],["2024-11-01","ladymerchan",8,88.9,2342708,3103000],["2024-11-01","nataliepreciado",4,0,260182,3630000],["2024-11-01","oscarcuervo",14,127.3,9269738,2814100],["2024-11-01","andreapinzon",8,72.7,4496131,2500000],["2024-11-01","angiegarcia",8,70,5964722,2630000],["2024-11-01","juanpiza",11,100,7895842,2630000],["2024-11-01","durleyelejalde",11,100,12692971,3095600],["2024-11-01","jorgearboleda",13,118.2,16261807,4570100],["2024-11-01","iancardona",4,0,635000,2500000],["2024-11-01","daniellaballesteros",9,81.8,4709336,2500000],["2024-11-01","edilbertotoro",17,150,13926800,2750000],["2024-11-01","wilsonpedreros",11,100,7082942,2500000],["2024-11-01","diegoramirezf",8,72.7,5502806,2500000],["2024-11-01","sindyrincon",7,77.8,2749289,2500000],["2024-11-01","deymerramirez",8,72.7,4592137,2500000],["2024-11-01","elainerodriguez",12,109.1,10544227,2958000],["2024-12-01","daniellaballesteros",6,0,892228,2500000],["2024-12-01","michaelgomez",10,100,8021019,2782000],["2024-12-01","andresgomez",14,140,10765905,3745000],["2024-12-01","jennifersabogal",10,100,8352974,3672240],["2024-12-01","caterinsierra",4,0,0,2500000],["2024-12-01","sindyrincon",10,100,4945208,2500000],["2024-12-01","danieluseche",9,150,8022731,2500000],["2024-12-01","vivianachacon",10,100,9356582,3957342],["2024-12-01","juansalamanca",7,116.7,6244716,2500000],["2024-12-01","edilbertotoro",4,0,3394200,2750000],["2024-12-01","mariocardenas",9,90,5059515,2500000],["2024-12-01","cindybacca",13,144.4,12112716,2675000],["2024-12-01","luisaloaiza",7,100,3016167,2630000],["2024-12-01","leonardosanchez",12,120,8357626,2652000],["2024-12-01","wilsonpedreros",10,100,5336150,2500000],["2024-12-01","rubenhernandez",5,0,1087800,2500000],["2024-12-01","johnaranda",9,90,6896242,4119500],["2024-12-01","diegoramirezf",13,144.4,6583166,2500000],["2024-12-01","jojhannparra",8,80,3961273,2782000],["2024-12-01","nataliepreciado",10,100,6204486,3630000],["2024-12-01","oscarcuervo",12,150,8685480,2814100],["2024-12-01","andreapinzon",9,90,5332740,2500000],["2024-12-01","angiegarcia",8,80,6225202,2630000],["2024-12-01","juanpiza",10,100,9127250,2630000],["2024-12-01","heidymarin",8,80,5562119,2500000],["2024-12-01","durleyelejalde",4,0,1090000,3095600],["2024-12-01","jorgearboleda",12,150,23813932,4570100],["2024-12-01","iancardona",4,0,331250,2500000],["2024-12-01","deymerramirez",9,90,5237700,2500000],["2024-12-01","elainerodriguez",11,110,13299131,2958000],["2025-01-01","daniellaballesteros",4,0,165682,2500000],["2025-01-01","michaelgomez",7,116.7,5063160,2782000],["2025-01-01","andresgomez",14,150,15198386,3745000],["2025-01-01","jennifersabogal",14,116.7,11360875,3672240],["2025-01-01","caterinsierra",5,0,0,2500000],["2025-01-01","sindyrincon",13,108.3,5555263,3103000],["2025-01-01","vivianachacon",9,75,5563463,3957342],["2025-01-01","juansalamanca",8,0,1263409,2500000],["2025-01-01","edilbertotoro",6,0,486000,2750000],["2025-01-01","mariocardenas",9,90,4570155,2500000],["2025-01-01","cindybacca",15,125,7743521,2675000],["2025-01-01","leidychitiva",11,91.7,4505321,2500000],["2025-01-01","luisaloaiza",17,150,14966400,2500000],["2025-01-01","leonardosanchez",10,125,10731817,2652000],["2025-01-01","wilsonpedreros",10,100,4110650,2500000],["2025-01-01","rubenhernandez",6,0,173145,2500000],["2025-01-01","johnaranda",18,150,10880915,4119500],["2025-01-01","diegoramirezf",11,91.7,7935018,2500000],["2025-01-01","jojhannparra",4,0,808800,2782000],["2025-01-01","nataliepreciado",9,75,6329688,3630000],["2025-01-01","oscarcuervo",12,100,5109024,2675000],["2025-01-01","andreapinzon",10,83.3,8350535,2500000],["2025-01-01","angiegarcia",13,108.3,11795950,2500000],["2025-01-01","juanpiza",16,133.3,17972000,2500000],["2025-01-01","heidymarin",6,75,3861600,2500000],["2025-01-01","durleyelejalde",14,150,15100250,2942500],["2025-01-01","jorgearboleda",14,116.7,14142000,4344200],["2025-01-01","iancardona",9,75,5263500,2500000],["2025-01-01","deymerramirez",11,91.7,9525189,2500000],["2025-01-01","elainerodriguez",6,85.7,8151145,2958000],["2025-02-01","daniellaballesteros",8,72.7,2543381,2500000],["2025-02-01","michaelgomez",14,116.7,9313035,2782000],["2025-02-01","andresgomez",11,91.7,6229446,3745000],["2025-02-01","jennifersabogal",16,133.3,13047658,3672240],["2025-02-01","caterinsierra",8,0,0,2500000],["2025-02-01","sindyrincon",14,116.7,7656752,3103000],["2025-02-01","vivianachacon",18,150,10925948,3957342],["2025-02-01","juansalamanca",15,125,7608064,2500000],["2025-02-01","mariocardenas",7,0,1320705,2500000],["2025-02-01","cindybacca",13,108.3,8244827,2675000],["2025-02-01","luisaloaiza",12,100,8360250,2500000],["2025-02-01","leonardosanchez",17,141.7,10312379,2652000],["2025-02-01","wilsonpedreros",16,133.3,8471933,2500000],["2025-02-01","rubenhernandez",11,91.7,4506975,2500000],["2025-02-01","johnaranda",22,150,15079778,4119500],["2025-02-01","diegoramirezf",11,100,8389466,2500000],["2025-02-01","karenlasprilla",13,108.3,7001017,2500000],["2025-02-01","jojhannparra",9,75,2996325,2782000],["2025-02-01","nataliepreciado",8,80,6507881,3630000],["2025-02-01","oscarcuervo",17,141.7,11593931,2675000],["2025-02-01","andreapinzon",13,108.3,16643200,2500000],["2025-02-01","angiegarcia",11,91.7,4614125,2500000],["2025-02-01","juanpiza",13,108.3,6641875,2500000],["2025-02-01","heidymarin",5,0,1179000,2500000],["2025-02-01","durleyelejalde",12,100,9295485,2942500],["2025-02-01","jorgearboleda",13,108.3,13844735,4344200],["2025-02-01","iancardona",10,83.3,5990792,2500000],["2025-02-01","deymerramirez",5,0,468091,2500000],["2025-02-01","elainerodriguez",4,0,812805,2958000],["2025-03-01","daniellaballesteros",5,0,720109,2500000],["2025-03-01","michaelgomez",12,100,8531200,2782000],["2025-03-01","andresgomez",17,141.7,15909617,3745000],["2025-03-01","jennifersabogal",10,83.3,11712435,3672240],["2025-03-01","caterinsierra",8,80,4457880,2500000],["2025-03-01","sindyrincon",11,100,7242749,2500000],["2025-03-01","vivianachacon",17,141.7,18483947,3957342],["2025-03-01","juansalamanca",10,83.3,6593375,2500000],["2025-03-01","mariocardenas",8,0,0,2500000],["2025-03-01","cindybacca",17,141.7,13551602,2675000],["2025-03-01","luisaloaiza",13,118.2,9581502,2500000],["2025-03-01","leonardosanchez",16,133.3,18257926,2652000],["2025-03-01","wilsonpedreros",10,100,5796750,2500000],["2025-03-01","rubenhernandez",10,83.3,8214434,2500000],["2025-03-01","johnaranda",21,150,19328093,4119500],["2025-03-01","diegoramirezf",11,91.7,8045359,2500000],["2025-03-01","karenlasprilla",4,0,2704976,2500000],["2025-03-01","jojhannparra",10,125,6143177,2782000],["2025-03-01","nataliepreciado",11,91.7,6193193,3630000],["2025-03-01","oscarcuervo",20,150,14469292,2675000],["2025-03-01","andreapinzon",11,91.7,10845863,2500000],["2025-03-01","angiegarcia",15,125,14413125,2500000],["2025-03-01","juanpiza",12,100,10703250,2500000],["2025-03-01","heidymarin",12,109.1,9160364,2500000],["2025-03-01","durleyelejalde",10,90.9,12863090,2942500],["2025-03-01","jorgearboleda",11,100,15267625,4344200],["2025-03-01","iancardona",9,81.8,5950773,2500000],["2025-03-01","deymerramirez",3,0,202125,2500000],["2025-03-01","elainerodriguez",0,100,8144167,2958000],["2025-04-01","deymerramirez",13,118.2,12340910,2500000],["2025-04-01","caterinsierra",9,75,4861521,2500000],["2025-04-01","diegoramirezf",9,75,4562666,2500000],["2025-04-01","oscarcuervo",10,83.3,9300902,2675000],["2025-04-01","andresgomez",12,100,11106995,3745000],["2025-04-01","luisaloaiza",12,100,8403756,2500000],["2025-04-01","leonardosanchez",12,100,11460815,2652000],["2025-04-01","juansalamanca",14,116.7,9839750,2500000],["2025-04-01","michaelgomez",15,120,11633336,2782000],["2025-04-01","cindybacca",14,116.7,8404918,2675000],["2025-04-01","johnaranda",15,120,10496403,4119500],["2025-04-01","vivianachacon",15,120,16650591,3957342],["2025-04-01","andreapinzon",15,120,8050241,2500000],["2025-04-01","jennifersabogal",16,120,14341125,3672240],["2025-04-01","ladymerchan",17,120,8923532,3103000],["2025-04-01","angiegarcia",12,100,11742711,2500000],["2025-04-01","juanpiza",19,120,15897691,2500000],["2025-04-01","heidymarin",10,90.9,8872363,2500000],["2025-04-01","jorgearboleda",17,120,15629194,4344200],["2025-05-01","daniellaballesteros",9,75,3250000,2500000],["2025-05-01","michaelgomez",12,100,12702257,2782000],["2025-05-01","andresgomez",18,120,16157350,3745000],["2025-05-01","jennifersabogal",16,120,15233750,3672240],["2025-05-01","caterinsierra",7,58.3,1254220,2500000],["2025-05-01","vivianachacon",14,116.7,11947090,3957342],["2025-05-01","juansalamanca",22,120,18375320,2500000],["2025-05-01","mariocardenas",9,75,3638889,2500000],["2025-05-01","cindybacca",15,120,12988294,2675000],["2025-05-01","leonardosanchez",21,120,14639525,2652000],["2025-05-01","wilsonpedreros",16,120,11546025,2500000],["2025-05-01","johnaranda",13,118.2,12015997,4119500],["2025-05-01","diegoramirezf",11,91.7,6757573,2500000],["2025-05-01","oscarcuervo",12,100,8313317,2814100],["2025-05-01","andreapinzon",14,116.7,14655798,2500000],["2025-05-01","yesicapinzon",12,100,9020833,2500000],["2025-05-01","angiegarcia",13,108.3,12949377,2630000],["2025-05-01","juanpiza",10,83.3,6450275,2630000],["2025-05-01","durleyelejalde",12,100,12200000,3095600],["2025-05-01","jorgearboleda",14,116.7,18538850,4570100],["2025-05-01","iancardona",10,83.3,5196250,2500000],["2025-05-01","deymerramirez",10,90.9,9831820,2500000],["2025-05-01","elainerodriguez",11,100,10409091,2958000],["2025-06-01","daniellaballesteros",8,66.7,1361108,2500000],["2025-06-01","michaelgomez",19,120,14291423,2782000],["2025-06-01","andresgomez",16,120,15160158,3745000],["2025-06-01","jennifersabogal",11,91.7,7968705,3672240],["2025-06-01","vivianachacon",12,100,8229168,3957342],["2025-06-01","juansalamanca",11,91.7,6779545,2500000],["2025-06-01","mariocardenas",10,83.3,2564720,2500000],["2025-06-01","luisaloaiza",17,120,12995882,2630000],["2025-06-01","leonardosanchez",19,120,17899540,2652000],["2025-06-01","wilsonpedreros",16,120,16611875,2500000],["2025-06-01","rubenhernandez",13,108.3,10020833,2500000],["2025-06-01","johnaranda",14,116.7,9349321,4119500],["2025-06-01","juanbeltran",15,120,9074667,2500000],["2025-06-01","diegoramirezf",11,91.7,6954544,2500000],["2025-06-01","jojhannparra",9,75,4497222,2782000],["2025-06-01","oscarcuervo",14,116.7,8765417,2814100],["2025-06-01","andreapinzon",17,120,14940287,2500000],["2025-06-01","angiegarcia",13,118.2,12987880,2630000],["2025-06-01","juanpiza",12,109.1,7393182,2630000],["2025-06-01","durleyelejalde",9,75,6594444,3095600],["2025-06-01","jorgearboleda",11,91.7,11079144,4570100],["2025-06-01","iancardona",11,91.7,6213636,2500000],["2025-06-01","deymerramirez",6,54.5,5016667,2500000],["2025-06-01","elainerodriguez",7,63.6,5498070,2958000],["2025-07-01","daniellaballesteros",13,108.3,8312500,2500000],["2025-07-01","michaelgomez",14,116.7,15200655,2782000],["2025-07-01","andresgomez",12,100,12498610,3745000],["2025-07-01","jennifersabogal",9,75,5495163,3672240],["2025-07-01","caterinsierra",9,75,2397222,2500000],["2025-07-01","vivianachacon",23,120,18888308,3957342],["2025-07-01","juansalamanca",15,120,10534725,2500000],["2025-07-01","leonardosanchez",19,120,20800699,2652000],["2025-07-01","wilsonpedreros",11,91.7,11416080,2500000],["2025-07-01","rubenhernandez",7,58.3,2833336,2500000],["2025-07-01","johnaranda",15,120,11373700,4119500],["2025-07-01","juanbeltran",12,100,9782664,2500000],["2025-07-01","diegoramirezf",9,75,4651514,2500000],["2025-07-01","jojhannparra",9,75,4683333,2782000],["2025-07-01","ladymerchan",6,75,3500000,3103000],["2025-07-01","nataliepreciado",10,90.9,7590908,3630000],["2025-07-01","oscarcuervo",15,120,12456837,2814100],["2025-07-01","andreapinzon",13,108.3,11826182,2500000],["2025-07-01","angiegarcia",11,100,8799987,2630000],["2025-07-01","juanpiza",12,120,12439832,2630000],["2025-07-01","jorgearboleda",9,81.8,7531162,4570100],["2025-07-01","iancardona",10,90.9,6909088,2500000],["2025-07-01","deymerramirez",7,63.6,3841667,2500000],["2025-07-01","elainerodriguez",8,72.7,4937500,2958000],["2025-08-01","daniellaballesteros",6,50,2673613,2500000],["2025-08-01","michaelgomez",16,120,14538400,2782000],["2025-08-01","andresgomez",18,120,17200002,3745000],["2025-08-01","jennifersabogal",20,120,12446753,3672240],["2025-08-01","caterinsierra",10,83.3,5904444,2500000],["2025-08-01","vivianachacon",18,120,14126630,3957342],["2025-08-01","yesicapinzon",13,108.3,11729167,2500000],["2025-08-01","juansalamanca",16,120,13428266,2500000],["2025-08-01","leonardosanchez",21,120,17614634,2652000],["2025-08-01","wilsonpedreros",9,75,6308079,2500000],["2025-08-01","rubenhernandez",9,75,3781945,2500000],["2025-08-01","johnaranda",14,116.7,11960530,4119500],["2025-08-01","juanbeltran",10,90.9,7036502,2500000],["2025-08-01","oscarcuervo",13,118.2,13201243,2814100],["2025-08-01","andreapinzon",13,108.3,9376227,2500000],["2025-08-01","angiegarcia",11,100,10500003,2630000],["2025-08-01","juanpiza",8,100,7415908,2630000],["2025-08-01","durleyelejalde",9,100,11666667,3095600],["2025-08-01","iancardona",12,120,17368333,2500000],["2025-08-01","deymerramirez",12,109.1,12318182,2500000],["2025-08-01","elainerodriguez",6,54.5,4453031,2958000],["2025-09-01","daniellaballesteros",7,58.3,354167,2500000],["2025-09-01","michaelgomez",27,120,21005232,2782000],["2025-09-01","andresgomez",41,120,28728554,3745000],["2025-09-01","jennifersabogal",19,120,15571237,3672240],["2025-09-01","caterinsierra",10,83.3,6482222,2500000],["2025-09-01","vivianachacon",23,120,20486952,3957342],["2025-09-01","juansalamanca",14,116.7,8249185,2500000],["2025-09-01","luisaloaiza",14,116.7,10920833,2630000],["2025-09-01","leonardosanchez",26,120,23128449,2652000],["2025-09-01","wilsonpedreros",13,108.3,9760731,2500000],["2025-09-01","rubenhernandez",12,100,9444443,2500000],["2025-09-01","johnaranda",11,91.7,6658228,4119500],["2025-09-01","juanbeltran",9,75,5933333,2500000],["2025-09-01","diegoramirezf",13,108.3,6652777,2500000],["2025-09-01","jojhannparra",12,100,8020833,2782000],["2025-09-01","oscarcuervo",20,120,11880820,2814100],["2025-09-01","andreapinzon",10,100,10287503,2500000],["2025-09-01","angiegarcia",11,91.7,9181820,2630000],["2025-09-01","juanpiza",9,90,5947727,2630000],["2025-09-01","jorgearboleda",9,120,5120000,4570100],["2025-09-01","iancardona",12,120,13955001,2500000],["2025-09-01","deymerramirez",8,72.7,5178978,2500000],["2025-09-01","elainerodriguez",10,90.9,9675001,2958000],["2025-10-01","michaelgomez",15,120,18343803,2782000],["2025-10-01","andresgomez",15,120,18998359,3745000],["2025-10-01","jennifersabogal",11,110,15108317,3672240],["2025-10-01","caterinsierra",4,33.3,1110000,2500000],["2025-10-01","vivianachacon",17,120,18238575,3957342],["2025-10-01","yesicapinzon",12,100,9375000,2500000],["2025-10-01","juansalamanca",16,120,13214418,2500000],["2025-10-01","andreapinzon",12,100,13500000,2500000],["2025-10-01","leonardosanchez",19,120,20197324,2652000],["2025-10-01","wilsonpedreros",7,70,7416668,2500000],["2025-10-01","johnaranda",10,83.3,7009089,4119500],["2025-10-01","juanbeltran",14,116.7,9823998,2500000],["2025-10-01","diegoramirezf",9,75,4493057,2500000],["2025-10-01","jojhannparra",6,50,2125002,2782000],["2025-10-01","oscarcuervo",16,120,12791989,2814100],["2025-10-01","luisaloaiza",8,66.7,2125002,2630000],["2025-10-01","angiegarcia",13,108.3,12274621,2630000],["2025-10-01","juanpiza",12,100,9512500,2630000],["2025-10-01","jorgearboleda",10,111.1,15720001,4570100],["2025-10-01","iancardona",9,100,16108335,2500000],["2025-10-01","deymerramirez",10,83.3,8637500,2500000],["2025-10-01","elainerodriguez",13,108.3,12275000,2958000],["2025-11-01","michaelgomez",12,100,10512665,2782000],["2025-11-01","andresgomez",11,91.7,6935635,3745000],["2025-11-01","caterinsierra",8,80,4993750,2500000],["2025-11-01","vivianachacon",18,120,18425767,3957342],["2025-11-01","juansalamanca",15,120,12335667,2500000],["2025-11-01","mariocardenas",13,108.3,10383333,2500000],["2025-11-01","andreapinzon",7,58.3,1841668,2500000],["2025-11-01","leonardosanchez",12,109.1,11860693,2652000],["2025-11-01","wilsonpedreros",12,100,9291667,2500000],["2025-11-01","rubenhernandez",10,83.3,6654167,2500000],["2025-11-01","juanbeltran",9,75,5930557,2500000],["2025-11-01","jojhannparra",12,100,7656944,2782000],["2025-11-01","oscarcuervo",15,120,11628042,2814100],["2025-11-01","luisaloaiza",11,91.7,5563636,2630000],["2025-11-01","angiegarcia",10,83.3,7935228,2630000],["2025-11-01","juanpiza",11,91.7,6980683,2630000],["2025-11-01","iancardona",10,111.1,16021668,2500000],["2025-11-01","deymerramirez",12,100,11975000,2500000],["2025-11-01","elainerodriguez",8,72.7,6260418,2958000],["2025-12-01","michaelgomez",10,90.9,8049353,2782000],["2025-12-01","andresgomez",9,81.8,4814403,3745000],["2025-12-01","caterinsierra",9,75,3528472,2500000],["2025-12-01","vivianachacon",25,120,20465115,3957342],["2025-12-01","yesicapinzon",10,83.3,6200000,2500000],["2025-12-01","juansalamanca",16,120,15239916,2500000],["2025-12-01","andreapinzon",14,116.7,10666667,2500000],["2025-12-01","leonardosanchez",22,120,17971197,2652000],["2025-12-01","wilsonpedreros",10,100,10195835,2500000],["2025-12-01","rubenhernandez",9,75,5422222,2500000],["2025-12-01","johnaranda",12,120,8550000,4119500],["2025-12-01","juanbeltran",9,81.8,3659722,2500000],["2025-12-01","diegoramirezf",9,75,3041667,2500000],["2025-12-01","jojhannparra",6,54.5,1416668,2782000],["2025-12-01","oscarcuervo",13,108.3,10007207,2814100],["2025-12-01","luisaloaiza",10,83.3,5345454,2630000],["2025-12-01","angiegarcia",14,120,13640000,2630000],["2025-12-01","juanpiza",11,91.7,6980683,2630000],["2025-12-01","iancardona",12,120,16811668,2500000],["2025-12-01","deymerramirez",7,58.3,4458334,2500000],["2025-12-01","elainerodriguez",10,90.9,9481251,2958000],["2026-01-01","andresgomez",14,120,9203015,3745000],["2026-01-01","leonardosanchez",20,120,17053000,2652000],["2026-01-01","wilsonpedreros",10,90.9,7154167,2500000],["2026-01-01","rubenhernandez",10,90.9,10283332,2500000],["2026-01-01","johnaranda",14,120,7396000,4119500],["2026-01-01","juanbeltran",12,109.1,5989899,2500000],["2026-01-01","diegoramirezf",15,120,10589999,2500000],["2026-01-01","vivianachacon",12,120,14172400,3957342],["2026-01-01","juansalamanca",12,109.1,11761420,2500000],["2026-01-01","jojhannparra",11,100,6522727,2782000],["2026-01-01","oscarcuervo",12,109.1,10309986,2814100],["2026-01-01","luisaloaiza",10,90.9,5700000,2630000],["2026-01-01","angiegarcia",12,109.1,15162987,2630000],["2026-01-01","jorgearboleda",14,120,17199286,4570100],["2026-01-01","iancardona",10,100,11591668,2500000],["2026-01-01","deymerramirez",12,109.1,12809659,2500000],["2026-01-01","elainerodriguez",11,100,10481818,2958000],["2026-02-01","andresgomez",27,120,25010183,3745000],["2026-02-01","leonardosanchez",25,120,22637600,2652000],["2026-02-01","johnaranda",11,84.6,5194909,4119500],["2026-02-01","juanbeltran",15,115.4,11004897,2500000],["2026-02-01","vivianachacon",13,100,12427462,3957342],["2026-02-01","juansalamanca",17,120,14102094,2500000],["2026-02-01","jojhannparra",10,90.9,8731820,2782000],["2026-02-01","oscarcuervo",14,107.7,10064687,2814100],["2026-02-01","luisaloaiza",14,116.7,11291667,2630000],["2026-02-01","angiegarcia",14,107.7,15045530,2630000],["2026-02-01","jorgearboleda",11,110,12704286,4570100],["2026-02-01","iancardona",16,120,20687500,2500000],["2026-02-01","deymerramirez",7,58.3,3731062,2500000],["2026-02-01","elainerodriguez",12,100,10063259,2958000],["2026-02-01","ladymerchan",22,120,16776873,3103000],["2026-03-01","andresgomez",16,120,10300139,3745000],["2026-03-01","leonardosanchez",21,120,18126090,2652000],["2026-03-01","wilsonpedreros",9,81.8,4322221,2500000],["2026-03-01","rubenhernandez",13,100,11538462,2500000],["2026-03-01","johnaranda",12,92.3,6240908,4119500],["2026-03-01","juanbeltran",4,30.8,1694056,2500000],["2026-03-01","diegoramirezf",6,54.5,2120333,2500000],["2026-03-01","vivianachacon",16,120,14485096,3957342],["2026-03-01","juansalamanca",15,115.4,12410995,2500000],["2026-03-01","jojhannparra",10,76.9,4575000,2782000],["2026-03-01","oscarcuervo",14,120,10910640,2814100],["2026-03-01","luisaloaiza",10,76.9,5743562,2630000],["2026-03-01","angiegarcia",14,107.7,11638112,2630000],["2026-03-01","andreapinzon",9,100,12854167,2500000],["2026-03-01","iancardona",11,91.7,11619053,2500000],["2026-03-01","deymerramirez",3,23.1,1240531,2500000],["2026-03-01","elainerodriguez",8,61.5,5625949,2958000],["2026-04-01","andresgomez",15,107.1,11110417,3745000],["2026-04-01","michaelgomez",14,100,9291667,2782000],["2026-04-01","leonardosanchez",11,78.6,5161662,2652000],["2026-04-01","wilsonpedreros",16,114.3,10986111,2500000],["2026-04-01","johnaranda",13,100,8133975,4119500],["2026-04-01","juanbeltran",13,100,7628205,2500000],["2026-04-01","diegoramirezf",12,85.7,8200000,2500000],["2026-04-01","vivianachacon",11,78.6,7636364,3957342],["2026-04-01","yesicapinzon",12,85.7,8400000,2500000],["2026-04-01","juansalamanca",14,100,10245192,2500000],["2026-04-01","jojhannparra",9,64.3,2843750,2782000],["2026-04-01","oscarcuervo",12,100,8206721,2814100],["2026-04-01","luisaloaiza",10,71.4,3603125,2630000],["2026-04-01","angiegarcia",10,71.4,7130769,2630000],["2026-04-01","andreapinzon",11,100,8727273,2500000],["2026-04-01","iancardona",12,109.1,12518181,2500000],["2026-04-01","deymerramirez",9,69.2,4187500,2500000],["2026-04-01","elainerodriguez",14,116.7,13642362,2958000],
+["2025-02-01","carolinachaves",2,100.0,657000,2500000],
+["2025-03-01","carolinachaves",9,150.0,7129550,2500000],
+["2025-04-01","carolinachaves",5,83.3,3266800,2500000],
+["2025-05-01","carolinachaves",9,112.5,3700000,2500000],
+["2025-06-01","carolinachaves",9,75.0,5033333,2500000],
+["2025-07-01","carolinachaves",2,18.2,777776,2500000],
+["2025-08-01","carolinachaves",5,41.7,388888,2500000],
+["2025-09-01","carolinachaves",12,100.0,9312500,2500000],
+["2025-10-01","carolinachaves",9,75.0,6493057,2500000],
+["2025-11-01","carolinachaves",1,8.3,583332,2500000],
+["2025-12-01","carolinachaves",14,116.7,10729167,2500000],
+["2026-01-01","carolinachaves",8,72.7,5639586,2500000],
+["2026-02-01","carolinachaves",7,53.9,791667,2500000],
+["2026-03-01","carolinachaves",13,100.0,6652136,2500000],
+["2026-04-01","carolinachaves",16,114.3,9126603,2500000],
+["2025-03-01","santiagoperez",5,125.0,1567192,2500000],
+["2025-04-01","santiagoperez",3,60.0,251250,2500000],
+["2025-05-01","santiagoperez",4,50.0,966817,2500000],
+["2025-06-01","santiagoperez",5,41.7,0,2500000],
+["2025-07-01","santiagoperez",7,63.6,0,2500000],
+["2025-08-01","santiagoperez",2,16.7,0,2500000],
+["2025-09-01","santiagoperez",12,100.0,6458333,2500000],
+["2025-10-01","santiagoperez",10,90.9,5562501,2500000],
+["2025-11-01","santiagoperez",11,91.7,8217803,2500000],
+["2025-12-01","santiagoperez",17,120.0,14039143,2500000],
+["2026-01-01","santiagoperez",8,72.7,6081985,2500000],
+["2026-02-01","santiagoperez",10,76.9,3106250,2500000],
+["2026-03-01","santiagoperez",15,115.4,7484615,2500000],
+["2026-04-01","santiagoperez",15,107.1,11661859,2500000],
+["2025-10-01","augustocueca",2,100.0,600000,2500000],
+["2025-11-01","augustocueca",9,120.0,4511111,2500000],
+["2025-12-01","augustocueca",4,80.0,1722222,2500000],
+["2026-01-01","augustocueca",10,120.0,3200000,2500000],
+["2026-02-01","augustocueca",18,120.0,11880000,2500000],
+["2026-03-01","augustocueca",12,92.3,8763890,2500000],
+["2026-04-01","augustocueca",14,100.0,10400000,2500000],
+["2025-10-01","sebastianherrera",3,120.0,1146667,2500000],
+["2025-11-01","sebastianherrera",5,120.0,2673334,2500000],
+["2025-12-01","sebastianherrera",3,60.0,1200000,2500000],
+["2026-01-01","sebastianherrera",7,87.5,2500000,2500000],
+["2026-02-01","sebastianherrera",3,23.1,1000000,2500000],
+["2026-03-01","sebastianherrera",10,76.9,3775000,2500000],
+["2026-04-01","sebastianherrera",10,71.4,4978125,2500000],
+["2026-02-01","vivianabautista",2,50.0,1400000,2500000],
+["2026-03-01","vivianabautista",3,50.0,800000,2500000],
+["2026-04-01","vivianabautista",9,112.5,4500000,2500000],
+["2025-12-01","pablogalvis",5,120.0,2534000,2500000],
+["2026-01-01","pablogalvis",8,120.0,5574000,2500000],
+["2026-02-01","pablogalvis",6,66.7,4197000,2500000],
+["2026-03-01","pablogalvis",5,45.5,2495000,2500000],
+["2026-04-01","pablogalvis",5,41.7,0,2500000],
+["2026-03-01","jorgesuarez",2,100.0,400000,2500000],
+["2026-04-01","jorgesuarez",4,100.0,1200000,2500000],
+["2026-04-01","heidermarin",9,120.0,11800000,2500000],
+["2026-04-01","danielbarrantes",4,100.0,1000000,2500000],
+["2024-12-01","yesicapinzon",2,0.0,0,2500000],
+["2025-01-01","yesicapinzon",4,80.0,1222400,2500000],
+["2025-02-01","yesicapinzon",6,75.0,2581538,2500000],
+["2025-03-01","yesicapinzon",6,0.0,319163,2500000],
+["2025-04-01","yesicapinzon",6,50.0,102713,2500000],
+["2025-06-01","yesicapinzon",2,16.7,2125002,2500000],
+["2025-07-01","yesicapinzon",0,0.0,354167,2500000],
+["2024-09-01","rubenhernandez",2,0.0,0,2500000],
+["2024-10-01","rubenhernandez",3,0.0,0,2500000]
+,
+["2025-08-01","nataliepreciado",5,45.5,872727,3630000],
+["2025-09-01","nataliepreciado",13,108.3,7057954,3630000],
+["2025-10-01","nataliepreciado",14,120.0,10406300,3630000],
+["2025-11-01","nataliepreciado",11,100.0,9206233,3630000],
+["2025-12-01","nataliepreciado",11,91.7,8636365,3630000],
+["2026-01-01","nataliepreciado",5,45.5,704545,3630000],
+["2026-02-01","nataliepreciado",10,76.9,4245454,3630000],
+["2026-03-01","nataliepreciado",9,69.2,2775000,3630000],
+["2026-04-01","nataliepreciado",5,35.7,194444,3630000],
+["2026-01-01","caterinsierra",5,45.5,0,2500000],
+["2026-02-01","caterinsierra",9,69.2,3416667,2500000],
+["2026-03-01","caterinsierra",4,33.3,388888,2500000],
+["2026-04-01","caterinsierra",9,64.3,3343750,2500000],
+["2026-04-01","rubenhernandez",8,57.1,653846,2500000],
+["2025-04-01","wilsonpedreros",7,58.3,1238350,2500000],
+["2026-02-01","wilsonpedreros",9,69.2,5352778,2500000],
+["2024-06-01","jojhannparra",5,43.8,1524370,2782000],
+["2024-07-01","jojhannparra",6,0.0,963850,2782000],
+["2024-11-01","jojhannparra",2,0.0,293045,2782000],
+["2025-04-01","jojhannparra",6,50.0,2303459,2782000],
+["2025-05-01","jojhannparra",8,66.7,0,2782000],
+["2025-08-01","jojhannparra",5,41.7,1108331,2782000],
+["2026-01-01","andreapinzon",8,72.7,6968752,2500000],
+["2026-02-01","andreapinzon",2,18.2,1145834,2500000],
+["2025-08-01","diegoramirezf",7,58.3,1401513,2500000],
+["2025-11-01","diegoramirezf",1,8.3,821338,2500000],
+["2026-02-01","diegoramirezf",10,76.9,4288276,2500000]
+];
+
+const MK=['2024-01-01','2024-02-01','2024-03-01','2024-04-01','2024-05-01','2024-06-01','2024-07-01','2024-08-01','2024-09-01','2024-10-01','2024-11-01','2024-12-01','2025-01-01','2025-02-01','2025-03-01','2025-04-01','2025-05-01','2025-06-01','2025-07-01','2025-08-01','2025-09-01','2025-10-01','2025-11-01','2025-12-01','2026-01-01','2026-02-01','2026-03-01','2026-04-01'];
+const ML=['Ene 24','Feb 24','Mar 24','Abr 24','May 24','Jun 24','Jul 24','Ago 24','Sep 24','Oct 24','Nov 24','Dic 24','Ene 25','Feb 25','Mar 25','Abr 25','May 25','Jun 25','Jul 25','Ago 25','Sep 25','Oct 25','Nov 25','Dic 25','Ene 26','Feb 26','Mar 26','Abr 26'];
+const ESQ_NEW='2025-04-01';
+
+function fmt(n){return '$'+Math.round(n).toLocaleString('es-CO')}
+function fmtM(n){const v=n/1000000;return '$'+(v>=10?Math.round(v):Math.round(v*10)/10)+'M'}
+
+const mesMap={};
+MK.forEach(m=>{mesMap[m]={v:0,p:0,n:0}});
+RAW.forEach(([m,,v,,p])=>{if(mesMap[m]){mesMap[m].v+=v;mesMap[m].p+=p;mesMap[m].n++;}});
+const ppv=MK.map(m=>mesMap[m].v>0?Math.round(mesMap[m].p/mesMap[m].v):0);
+const col_ppv=MK.map(m=>m>=ESQ_NEW?'#00C896':'#5C2D91');
+const N=ppv.length,sx=N*(N-1)/2,sy=ppv.reduce((a,b)=>a+b,0),sxy=ppv.reduce((a,v,i)=>a+i*v,0),sx2=Array.from({length:N},(_,i)=>i*i).reduce((a,b)=>a+b,0);
+const sl=(N*sxy-sx*sy)/(N*sx2-sx*sx),ic=(sy-sl*sx)/N;
+const trendPpv=Array.from({length:N},(_,i)=>Math.round(ic+sl*i));
+const zeroPMonth=MK.map(m=>{const recs=RAW.filter(r=>r[0]===m&&r[2]>0&&r[4]===0);return recs.length;});
+
+Chart.defaults.font.family="'Inter', sans-serif";
+Chart.defaults.color='#6B5A82';
+
+// ── DATOS REALES — 31 BUYERS ACTIVOS ──
+const ACT_com=[789039,731770,696067,702982,662564,625170,575793,713136,562389,618123,583137,651906,660367,551378,751729,632756,735078,706486,723643,742509,688217,828182,722089,727987,767201,688095,695365,562224];
+const ACT_dst=[2.3,10.2,6.8,14.2,2.7,6.1,12.5,6.5,7.2,3.8,11.0,6.1,9.6,12.7,7.5,10.4,4.8,9.4,7.8,10.2,7.9,6.8,8.7,7.8,6.5,14.3,4.5,14.4];
+// Media móvil 3 meses — muestra la tendencia real bajista sin distorsión de picos
+const ACT_ma3=[null,null,738959,710273,687204,663572,621176,638033,617106,631216,587883,617722,631803,621217,654491,645288,706521,691440,721736,724213,718123,752969,746163,759419,739092,727761,716887,648561];
+const ACT_tot=[9684783,8988234,8439756,8758296,8849985,8403175,8291313,10402661,8110898,9353148,8935632,9483274,10038651,9545451,12312682,9492200,12186922,11699740,11616639,11820026,12897580,12715112,10586609,11741511,11768766,11134205,10307248,9298514];
+const ACT_sal=[2977950,2934500,2934500,2934500,2947145,2947145,2878860,2947145,2947145,2947145,2909883,2909883,2818633,2818633,2808679,2866873,2890350,2868663,2890350,2868663,2864102,2864102,2884330,2884330,2804629,2804629,2804629,2776718];
+// Inflación Colombia por año (DANE): 2024=5.2%, 2025=5.1%, 2026 parcial
+// Ajuste escalonado: 2024=base, 2025=×1.052, 2026=×1.052×1.051
+// Inflación: promedio 3 años (5.2%+5.1%+5.0%)/3 = 5.1% anual. Ajuste escalonado por año.
+const ACT_sal_adj=[2977950,2977950,2977950,2977950,2977950,2977950,2977950,2977950,2977950,2977950,2977950,2977950,3129825,3129825,3129825,3129825,3129825,3129825,3129825,3129825,3129825,3129825,3129825,3129825,3289447,3289447,3289447,3289447];
+
+function avgArr(arr){return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);}
+function trendLine(arr){const n=arr.length,sx=n*(n-1)/2,sy=arr.reduce((a,b)=>a+b,0),sxy=arr.reduce((a,v,i)=>a+i*v,0),sx2=Array.from({length:n},(_,i)=>i*i).reduce((a,b)=>a+b,0),sl=(n*sxy-sx*sy)/(n*sx2-sx*sx),ic=(sy-sl*sx)/n;return Array.from({length:n},(_,i)=>Math.round(ic+sl*i));}
+
+// Scorecards con valores fijos en HTML
+
+const gc=()=>'rgba(92,45,145,0.07)';
+const colBars=MK.map(m=>m>=ESQ_NEW?'#00C896':'#5C2D91');
+
+// 1. Comisión neta/cierre — con media móvil 3m para mostrar tendencia real
+new Chart(document.getElementById('ch-trend'),{type:'bar',data:{labels:ML,datasets:[
+  {label:'Comisión neta/cierre',data:ACT_com,backgroundColor:colBars,borderRadius:3,borderWidth:0,order:2},
+  {type:'line',label:'Tendencia (media móvil 3m)',data:ACT_ma3,borderColor:'#FF6B35',borderWidth:2.5,pointRadius:0,tension:.4,fill:false,spanGaps:false,order:1}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:c=>{if(c.parsed.y===null)return null;return c.dataset.label+': $'+c.parsed.y.toLocaleString('es-CO');}}}},scales:{x:{ticks:{font:{size:9},maxRotation:45,autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:gc()},min:400000,max:1000000}}}});
+
+// 2. % desistimiento — activos
+const colDst=ACT_dst.map(v=>v>10?'#E53E3E':v>7?'#FF6B35':'#5C2D91');
+new Chart(document.getElementById('ch-dist'),{type:'bar',data:{labels:ML,datasets:[{label:'% desistimiento',data:ACT_dst,backgroundColor:colDst,borderRadius:3,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y}% descontado del variable ese mes`}}},scales:{x:{ticks:{font:{size:9},maxRotation:45,autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:gc()},min:0,max:18}}}});
+
+// 3. Compensación total — activos
+new Chart(document.getElementById('ch-cero'),{type:'bar',data:{labels:ML,datasets:[
+  {label:'Comp. total promedio',data:ACT_tot,backgroundColor:colBars,borderRadius:3,borderWidth:0},
+  {type:'line',label:'Tendencia',data:trendLine(ACT_tot),borderColor:'#FF6B35',borderDash:[5,3],borderWidth:2,pointRadius:0,tension:.3,fill:false}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:c=>c.dataset.label+': $'+Math.round(c.parsed.y/1e6*10)/10+'M'}}},scales:{x:{ticks:{font:{size:9},maxRotation:45,autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>'$'+Math.round(v/1e6*10)/10+'M'},grid:{color:gc()},min:6000000}}}});
+
+// 4. Básico nominal vs ajustado inflación — activos
+new Chart(document.getElementById('ch-basico'),{type:'line',data:{labels:ML,datasets:[
+  {label:'Básico real',data:ACT_sal,borderColor:'#5C2D91',borderWidth:2,pointRadius:0,tension:.3,fill:false},
+  {label:'Ajuste justo (+5.1% prom./año)',data:ACT_sal_adj,borderColor:'#FF6B35',borderDash:[5,3],borderWidth:2,pointRadius:0,tension:.3,fill:{target:0,above:'rgba(255,107,53,0.07)'}}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:c=>c.dataset.label+': $'+c.parsed.y.toLocaleString('es-CO')}}},scales:{x:{ticks:{font:{size:9},maxRotation:45,autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>'$'+Math.round(v/1e6*10)/10+'M'},grid:{color:gc()},min:2400000,max:3800000}}}});
+
+function updateScenario(){
+  const inc=+document.getElementById('sl-inc').value;
+  const nb=+document.getElementById('sl-buyers').value;
+  const base=+document.getElementById('sl-base').value;
+  document.getElementById('out-inc').textContent=fmt(inc);
+  document.getElementById('out-buyers').textContent=nb;
+  document.getElementById('out-base').textContent=fmt(base);
+  const mes=inc*nb,ano=mes*12,nuevo=base+inc,pct=Math.round((mes/235000000)*100);
+  document.getElementById('sc-mes').textContent=fmtM(mes);
+  document.getElementById('sc-ano').textContent=fmtM(ano);
+  document.getElementById('sc-nuevo').textContent=fmt(nuevo);
+  document.getElementById('sc-pct').textContent=pct+'%';
+  document.getElementById('sc-insight').textContent=`Incremento de ${fmt(inc)} para ${nb} buyers → costo mensual ${fmtM(mes)} (${pct}% del gasto variable actual). Costo anual: ${fmtM(ano)}. Nuevo básico promedio: ${fmt(nuevo)}.`;
+  const tramos=['0%','70%','85%','100%','120%+'];
+  const sinI=[0,base,base,base,base];
+  const conI=[0,nuevo,nuevo,nuevo,nuevo];
+  const varD=[0,3500000,6000000,8500000,11000000];
+  if(window._sc)window._sc.destroy();
+  window._sc=new Chart(document.getElementById('ch-scen'),{type:'bar',data:{labels:tramos,datasets:[{label:'Básico sin inc.',data:sinI,backgroundColor:'#B4B2A9',stack:'a',borderRadius:3,borderWidth:0},{label:'Básico con inc.',data:conI,backgroundColor:'#5C2D91',stack:'b',borderRadius:3,borderWidth:0},{label:'Variable prom.',data:varD,backgroundColor:'#F6C90E',stack:'b',borderRadius:3,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},boxWidth:10,boxHeight:10}}},scales:{x:{stacked:true,ticks:{font:{size:12}},grid:{display:false}},y:{stacked:true,ticks:{font:{size:10},callback:v=>fmtM(v)},grid:{color:'rgba(92,45,145,0.08)'}}}}});
+  const tbl=`<table><thead><tr><th>Escenario</th><th>Básico</th><th>Costo mes</th><th>% del variable</th></tr></thead><tbody>
+    <tr><td>Sin incremento</td><td>${fmt(base)}</td><td>—</td><td>—</td></tr>
+    <tr><td>+$${(inc/1000).toFixed(0)}K (seleccionado)</td><td style="color:#5C2D91;font-weight:600">${fmt(nuevo)}</td><td style="color:#5C2D91;font-weight:600">${fmtM(mes)}</td><td>${pct}%</td></tr>
+    <tr><td>Cubrir inflación (~10.5%)</td><td>${fmt(Math.round(base*1.105))}</td><td>${fmtM(Math.round(base*0.105)*nb)}</td><td>${Math.round((base*0.14*nb)/235000000*100)}%</td></tr>
+  </tbody></table>`;
+  document.getElementById('sc-tabla').innerHTML=tbl;
+}
+
+
+updateScenario();
+
+const buyerIdx={};
+RAW.forEach(([m,b,v,c,p,s])=>{if(!buyerIdx[b])buyerIdx[b]=[];buyerIdx[b].push({m,v,c,p,s});});
+const ACTIVOS=new Set(["andresgomez", "caterinsierra", "oscarcuervo", "vivianabautista", "sebastianherrera", "danielbarrantes", "leonardosanchez", "wilsonpedreros", "rubenhernandez", "johnaranda", "juanbeltran", "diegoramirezf", "augustocueca", "vivianachacon", "yesicapinzon", "juansalamanca", "jojhannparra", "santiagoperez", "carolinachaves", "heidermarin", "nataliepreciado", "luisaloaiza", "angiegarcia", "pablogalvis", "andreapinzon", "jorgesuarez", "iancardona", "deymerramirez", "elainerodriguez", "leidybuitrago", "leidyramirez"]);
+const allB=Object.keys(buyerIdx).filter(b=>buyerIdx[b].length>=1&&ACTIVOS.has(b)).sort();
+const selB=document.getElementById('sel-buyer');
+allB.forEach(b=>{const o=document.createElement('option');o.value=b;o.text=b;selB.appendChild(o);});
+
+function updateBuyerChart(){
+  const bv=document.getElementById('sel-buyer').value;
+  const pv=document.getElementById('sel-period').value;
+  let data;
+  if(bv==='all'){
+    const bm={};MK.forEach(m=>{bm[m]={p:0,c:0,v:0,s:0,n:0,ns:0}});
+    RAW.forEach(([m,,v,c,p,s])=>{if(!bm[m])return;bm[m].p+=p;bm[m].c+=c;bm[m].v+=v;bm[m].n++;if(s>0){bm[m].s+=s;bm[m].ns++;}});
+    data=MK.map(m=>({m,p:bm[m]?Math.round(bm[m].p/Math.max(bm[m].n,1)):0,c:bm[m]?bm[m].c/Math.max(bm[m].n,1):0,v:bm[m]?bm[m].v:0,s:bm[m]&&bm[m].ns>0?Math.round(bm[m].s/bm[m].ns):2500000}));
+  } else {
+    let recs=buyerIdx[bv]||[];
+    if(pv==='viejo')recs=recs.filter(r=>r.m<ESQ_NEW);
+    else if(pv==='nuevo')recs=recs.filter(r=>r.m>=ESQ_NEW);
+    data=MK.map(m=>{const r=recs.find(x=>x.m===m);return r?{m,p:r.p,c:r.c,v:r.v,s:r.s||2500000}:{m,p:0,c:0,v:0,s:2500000};});
+  }
+  const activos=data.filter(d=>d.v>0);
+  const totalP=data.reduce((a,d)=>a+d.p,0);
+  const cumpP=activos.length>0?Math.round(activos.reduce((a,d)=>a+d.c,0)/activos.length):0;
+  const avgVentas=activos.length>0?Math.round(activos.reduce((a,d)=>a+d.v,0)/activos.length):0;
+  const salProm=data.filter(d=>d.s>0).reduce((a,d,_,ar)=>a+d.s/ar.length,0);
+  document.getElementById('bk-meses').textContent=activos.length;
+  document.getElementById('bk-cump').textContent=cumpP+'%';
+  document.getElementById('bk-total').textContent=fmtM(totalP);
+  document.getElementById('bk-cero').textContent=avgVentas;
+  if(window._cb)window._cb.destroy();
+  window._cb=new Chart(document.getElementById('ch-buyer'),{type:'bar',data:{labels:ML,datasets:[{label:'Variable pagado',data:data.map(d=>d.p),backgroundColor:MK.map(m=>m>=ESQ_NEW?'#00C896':'#5C2D91'),borderRadius:3,borderWidth:0},{type:'line',label:'Salario base',data:data.map(d=>d.s||2500000),borderColor:'#F6C90E',borderDash:[4,3],borderWidth:1.5,pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},boxWidth:10,boxHeight:10}}},scales:{x:{ticks:{font:{size:10},maxRotation:45,autoSkip:false},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>fmtM(v)},grid:{color:'rgba(92,45,145,0.08)'}}}}});
+  buildTop();
+}
+
+function buildTop(){
+  const stats=allB.map(b=>{
+    const recs=buyerIdx[b];
+    const act=recs.filter(r=>r.v>0);
+    const cp=act.length>0?act.reduce((a,r)=>a+r.c,0)/act.length:0;
+    const tp=recs.reduce((a,r)=>a+r.p,0);
+    const pm=act.length>0?tp/act.length:0;
+    const sal=recs.filter(r=>r.s>0).reduce((a,r,_,ar)=>a+r.s/ar.length,0)||2500000;
+    const avgV=act.length>0?Math.round(act.reduce((a,r)=>a+r.v,0)/act.length):0;
+    return{b,ma:act.length,cp:Math.round(cp),tp,pm,sal,avgV};
+  }).filter(s=>s.ma>=3).sort((a,z)=>z.pm-a.pm).slice(0,10);
+  const tb=document.getElementById('tbl-top-body');
+  tb.innerHTML='';
+  stats.forEach(s=>{
+    const badge=s.cp>=100?'b-green':s.cp>=70?'b-yellow':'b-red';
+    const vbadge=s.avgV>=12?'b-green':s.avgV>=8?'b-yellow':'b-red';
+    tb.innerHTML+=`<tr><td style="font-weight:600">${s.b}</td><td>${s.ma}</td><td><span class="badge ${badge}">${s.cp}%</span></td><td>${fmtM(s.pm)}/mes</td><td>${fmt(s.sal)}</td><td style="font-weight:600;color:#5C2D91">${fmtM(s.pm+s.sal)}</td><td><span class="badge ${vbadge}">${s.avgV}</span></td></tr>`;
+  });
+}
+updateBuyerChart();
+
+function updateEsquema(){
+  const c=+document.getElementById('sl-cump').value;
+  const v=+document.getElementById('sl-ventas').value;
+  const t=+document.getElementById('sl-ticket').value*1000000;
+  document.getElementById('out-cump').textContent=c+'%';
+  document.getElementById('out-ventas').textContent=v;
+  document.getElementById('out-ticket').textContent='$'+t/1000000+'M';
+  function eV(c,v,t){const b=v*t*0.003;if(c<49.5)return 0;if(c<69.5)return b*0.4;return Math.min(b*c/100,b*1.3);}
+  function eM(c,v,t){if(c<70)return 0;return Math.min(v*t*0.003*c/100,v*t*0.003*1.5);}
+  function eN(c,v){if(c<70)return 0;let base;if(c<85)base=3500000;else if(c<100)base=6000000;else if(c<=120)base=8500000;else base=8500000;base=base*(Math.min(c,120)/100);if(c>120){const ex=Math.floor((c-120)/100*v);const b=[520000,540000,560000,580000,600000,650000,740000,870000,1020000,1200000,1410000];let eb=0;for(let i=0;i<Math.min(ex,b.length);i++)eb+=b[i];base=8500000*1.2+eb;}return base;}
+  const rv=eV(c,v,t),rm=eM(c,v,t),rn=eN(c,v);
+  document.getElementById('esq-cards').innerHTML=`
+    <div class="kpi-card" style="border-top:3px solid #5C2D91"><div class="kpi-label">Ene–Jun 2024 (% ticket)</div><div class="kpi-value" style="color:#5C2D91">${fmtM(rv)}</div><div class="kpi-sub">Umbral 49.5% · proporcional al valor</div></div>
+    <div class="kpi-card" style="border-top:3px solid #FF6B35"><div class="kpi-label">Jul 2024–Mar 2025 (% ticket 70%)</div><div class="kpi-value" style="color:#FF6B35">${fmtM(rm)}</div><div class="kpi-sub">Umbral 70% · mismo modelo, más exigente</div></div>
+    <div class="kpi-card" style="border-top:3px solid #00C896"><div class="kpi-label">Abr 2025+ (bono fijo)</div><div class="kpi-value" style="color:#059669">${fmtM(rn)}</div><div class="kpi-sub">Tramos fijos · sin relación con ticket</div></div>`;
+  const vr=Array.from({length:23},(_,i)=>i);
+  if(window._ce)window._ce.destroy();
+  window._ce=new Chart(document.getElementById('ch-esq'),{type:'line',data:{labels:vr,datasets:[{label:'Ene–Jun 2024',data:vr.map(vv=>eV(c,vv,t)),borderColor:'#5C2D91',borderWidth:2,borderDash:[6,3],pointRadius:0,tension:0.3,fill:false},{label:'Jul 2024–Mar 2025',data:vr.map(vv=>eM(c,vv,t)),borderColor:'#FF6B35',borderWidth:2,borderDash:[4,2],pointRadius:0,tension:0.3,fill:false},{label:'Abr 2025+',data:vr.map(vv=>eN(c,vv)),borderColor:'#00C896',borderWidth:2.5,pointRadius:0,tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},boxWidth:10,boxHeight:10}}},scales:{x:{title:{display:true,text:'Número de ventas',font:{size:11}},ticks:{font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>fmtM(v)},grid:{color:'rgba(92,45,145,0.08)'}}}}});
+  const msg=c<70?`Con ${c}% de cumplimiento: $0 de variable en el esquema vigente (desde jul 2024). Solo cobra el básico. En el esquema original (hasta jun 2024) habría recibido ${fmtM(eV(c,v,t))}.`:`Con ${c}% · ${v} ventas · ticket $${t/1000000}M: esquema viejo paga ${fmtM(rv)}, esquema jul 2024 paga ${fmtM(rm)}, esquema actual paga ${fmtM(rn)}. El modelo nuevo no depende del valor del ticket: ${v} ventas de $100M generan lo mismo que ${v} de $500M.`;
+  document.getElementById('esq-insight').textContent=msg;
+}
+updateEsquema();
+
+function showTab(id){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['resumen','escenarios','buyers','esquemas'][i]===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+</script>
+</body>
+</html>
