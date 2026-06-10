@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concurso Brokers · Modo Mundial · Habi</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --purple: #3C3489; --purple-mid: #534AB7;
+    --amber: #FAC775; --amber-dark: #412402; --teal: #1D9E75;
+    --bg: #f5f5f3; --bg2: #ffffff; --border: rgba(0,0,0,0.1);
+    --text: #1a1a1a; --text2: #666; --text3: #999;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
+  .header { background: var(--purple); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 16px; }
+  .header-icon { font-size: 32px; color: var(--amber); flex-shrink: 0; }
+  .header-text h1 { font-size: 20px; font-weight: 600; color: #EEEDFE; }
+  .header-text p { font-size: 13px; color: #AFA9EC; margin-top: 3px; }
+  .header-right { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .date-badge { background: var(--amber); color: var(--amber-dark); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
+  .status-dot { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #AFA9EC; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); display: inline-block; }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  @media (max-width: 600px) { .metrics { grid-template-columns: repeat(2, 1fr); } .header { flex-wrap: wrap; } .header-right { margin-left: 0; } }
+  .mc { background: var(--bg2); border-radius: var(--radius); padding: 1rem 1.1rem; border: 0.5px solid var(--border); }
+  .mc-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+  .mc-val { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
+  .mc-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .controls { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .controls input, .controls select { font-size: 13px; height: 36px; padding: 0 12px; border: 0.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg2); color: var(--text); outline: none; }
+  .controls input { flex: 1; min-width: 180px; }
+  .controls input:focus, .controls select:focus { border-color: var(--purple-mid); }
+  .btn { height: 36px; padding: 0 14px; font-size: 13px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); background: var(--bg2); color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn-primary { background: var(--purple); color: #EEEDFE; border-color: var(--purple); }
+  .btn-primary:hover { background: var(--purple-mid); }
+  .tab-row { display: flex; gap: 4px; margin-bottom: 1rem; border-bottom: 0.5px solid var(--border); }
+  .tab { padding: 8px 16px; font-size: 13px; border: none; background: none; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+  .tab.active { color: var(--purple); border-bottom-color: var(--purple); font-weight: 500; }
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1rem; }
+  .card-head { padding: .75rem 1.25rem; border-bottom: 0.5px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; }
+  .card-body { padding: 1.25rem; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  th { text-align: left; padding: 9px 10px; font-weight: 500; font-size: 11px; color: var(--text2); border-bottom: 0.5px solid var(--border); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+  td { padding: 9px 10px; border-bottom: 0.5px solid var(--border); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .col-rank { width: 40px; } .col-broker { width: 35%; } .col-com { width: 16%; }
+  .col-num { width: 9%; } .col-prog { width: 14%; } .col-boleta { width: 10%; }
+  .badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .b-purple { background: #EEEDFE; color: #3C3489; }
+  .b-gold { background: #FAC775; color: #412402; }
+  .b-silver { background: #e0dfd6; color: #2C2C2A; }
+  .b-bronze { background: #F5C4B3; color: #4A1B0C; }
+  .b-com { background: #E1F5EE; color: #085041; font-size: 10px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; padding: 2px 7px; border-radius: 20px; }
+  .pbar-bg { background: #ebebeb; border-radius: 4px; height: 5px; overflow: hidden; flex: 1; }
+  .pbar-fill { height: 100%; border-radius: 4px; background: var(--purple-mid); }
+  .pbar-row { display: flex; align-items: center; gap: 6px; }
+  .pbar-label { font-size: 10px; color: var(--text3); min-width: 28px; }
+  .footer { text-align: center; font-size: 11px; color: var(--text3); margin-top: 1rem; padding-bottom: 2rem; }
+  .loading-cell { text-align: center; padding: 2.5rem; color: var(--text2); font-size: 13px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--purple-mid); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: -4px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .top1 td:first-child { border-left: 3px solid #FAC775; }
+  .top2 td:first-child { border-left: 3px solid #b0aeaa; }
+  .top3 td:first-child { border-left: 3px solid #e8a98a; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <i class="ti ti-trophy header-icon" aria-hidden="true"></i>
+    <div class="header-text">
+      <h1>Concurso Brokers · Modo Mundial</h1>
+      <p id="status-txt">Cargando datos...</p>
+    </div>
+    <div class="header-right">
+      <span class="date-badge">29 mayo – 25 jun 2026</span>
+      <span class="status-dot"><span class="dot"></span><span id="update-time">actualizando...</span></span>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="mc"><div class="mc-label"><i class="ti ti-users" style="font-size:13px"></i> Brokers activos</div><div class="mc-val" id="m1">—</div><div class="mc-sub">en el concurso</div></div>
+    <div class="mc"><div class="mc-label"><i class="ti ti-check" style="font-size:13px"></i> Total cierres</div><div class="mc-val" id="m2">—</div><div class="mc-sub">acumulados</div></div>
+    <div class="mc"><div class="mc-label"><i class="ti ti-calendar" style="font-size:13px"></i> Total visitas</div><div class="mc-val" id="m3">—</div><div class="mc-sub">acumuladas</div></div>
+    <div class="mc"><div class="mc-label"><i class="ti ti-ticket" style="font-size:13px"></i> Boletas emitidas</div><div class="mc-val" id="m4">—</div><div class="mc-sub">en el sorteo</div></div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="q" placeholder="Buscar broker o comercial..." oninput="render()">
+    <select id="fil-com" onchange="render()"><option value="">Todos los comerciales</option></select>
+    <select id="sort" onchange="render()">
+      <option value="boletas_acumuladas">Por boletas</option>
+      <option value="cierres_acum">Por cierres</option>
+      <option value="visitas_acum">Por visitas</option>
+      <option value="broker">Por nombre</option>
+    </select>
+    <button class="btn btn-primary" onclick="loadData()">
+      <i class="ti ti-refresh" style="font-size:14px"></i> Actualizar
+    </button>
+  </div>
+
+  <div class="tab-row">
+    <button class="tab active" onclick="setTab('ranking',this)">Ranking</button>
+    <button class="tab" onclick="setTab('chart',this)">Gráfico</button>
+  </div>
+
+  <div id="tab-ranking">
+    <div class="card">
+      <div class="card-head">Tabla de posiciones</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th class="col-rank">#</th>
+            <th class="col-broker">Broker</th>
+            <th class="col-com">Comercial</th>
+            <th class="col-num" style="text-align:center">Cierres</th>
+            <th class="col-num" style="text-align:center">Visitas</th>
+            <th class="col-prog">Prox. boleta</th>
+            <th class="col-boleta" style="text-align:center">Boletas</th>
+          </tr></thead>
+          <tbody id="tbody">
+            <tr><td colspan="7" class="loading-cell"><span class="spinner"></span>Cargando datos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-chart" style="display:none">
+    <div class="card">
+      <div class="card-head">Boletas y cierres por broker (top 20)</div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#534AB7;display:inline-block"></span>Boletas</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#EF9F27;display:inline-block"></span>Cierres acumulados</span>
+        </div>
+        <div id="chart-wrap" style="position:relative;width:100%">
+          <canvas id="bChart" role="img" aria-label="Barras horizontales de boletas y cierres por broker"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Tablero Modo Mundial · Habi Colombia · Datos actualizados diariamente a las 8am</div>
+</div>
+
+<script>
+// Lee el CSV local del mismo repo — sin CORS, sin proxies, siempre funciona
+const CSV_URL = 'datos_mundial.csv';
+
+let allData = [], chartInst = null, activeTab = 'ranking';
+
+function brokerSummary(rows) {
+  const map = {};
+  rows.forEach(r => {
+    const k = (r.broker || '').trim();
+    if (!k || /^\d+$/.test(k)) return;
+    if (!map[k]) map[k] = { broker: k, comercial: (r.comercial || '').trim(), cierres_acum: 0, visitas_acum: 0, boletas_acumuladas: 0 };
+    const ca = parseFloat(r.cierres_acum) || 0;
+    const va = parseFloat(r.visitas_acum) || 0;
+    const ba = parseFloat(r.boletas_acumuladas) || 0;
+    if (ca > map[k].cierres_acum) map[k].cierres_acum = ca;
+    if (va > map[k].visitas_acum) map[k].visitas_acum = va;
+    if (ba > map[k].boletas_acumuladas) map[k].boletas_acumuladas = ba;
+  });
+  return Object.values(map);
+}
+
+async function loadData() {
+  document.getElementById('status-txt').textContent = 'Cargando datos...';
+  document.getElementById('update-time').textContent = 'actualizando...';
+  document.getElementById('tbody').innerHTML = '<tr><td colspan="7" class="loading-cell"><span class="spinner"></span>Cargando...</td></tr>';
+  try {
+    const res = await fetch(CSV_URL + '?t=' + Date.now());
+    const text = await res.text();
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+    allData = brokerSummary(parsed.data);
+    const coms = [...new Set(allData.map(d => d.comercial).filter(Boolean))].sort();
+    const sel = document.getElementById('fil-com');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Todos los comerciales</option>' +
+      coms.map(c => `<option value="${c}"${c === prev ? ' selected' : ''}>${c.split('@')[0]}</option>`).join('');
+    const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('update-time').textContent = `actualizado ${t}`;
+    document.getElementById('status-txt').textContent = `${allData.length} brokers activos en el concurso`;
+    render();
+  } catch(e) {
+    document.getElementById('status-txt').textContent = 'Error al cargar datos';
+    document.getElementById('tbody').innerHTML = '<tr><td colspan="7" class="loading-cell">Error cargando datos — recarga la página</td></tr>';
+  }
+}
+
+function getFiltered() {
+  const q = document.getElementById('q').value.toLowerCase();
+  const com = document.getElementById('fil-com').value;
+  const sort = document.getElementById('sort').value;
+  let d = allData.filter(r =>
+    (!q || r.broker.toLowerCase().includes(q) || r.comercial.toLowerCase().includes(q)) &&
+    (!com || r.comercial === com)
+  );
+  d.sort((a, b) => sort === 'broker' ? a.broker.localeCompare(b.broker) : b[sort] - a[sort]);
+  return d;
+}
+
+function render() {
+  const d = getFiltered();
+  document.getElementById('m1').textContent = new Set(d.map(r => r.broker)).size;
+  document.getElementById('m2').textContent = Math.round(d.reduce((s, r) => s + r.cierres_acum, 0)).toLocaleString('es-CO');
+  document.getElementById('m3').textContent = Math.round(d.reduce((s, r) => s + r.visitas_acum, 0)).toLocaleString('es-CO');
+  document.getElementById('m4').textContent = Math.round(d.reduce((s, r) => s + r.boletas_acumuladas, 0)).toLocaleString('es-CO');
+  renderTable(d);
+  if (activeTab === 'chart') renderChart(d);
+}
+
+function renderTable(d) {
+  const tbody = document.getElementById('tbody');
+  if (!d.length) { tbody.innerHTML = '<tr><td colspan="7" class="loading-cell">Sin resultados</td></tr>'; return; }
+  tbody.innerHTML = d.map((r, i) => {
+    const rc = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+    const bc = i === 0 ? 'b-gold' : i === 1 ? 'b-silver' : i === 2 ? 'b-bronze' : 'b-purple';
+    const rank = i < 3
+      ? `<span class="badge ${bc}" style="min-width:28px;justify-content:center">${i + 1}</span>`
+      : `<span style="font-size:12px;color:#999;padding:0 4px">${i + 1}</span>`;
+    const visRest = Math.round(r.visitas_acum % 12);
+    const pct = Math.round(visRest / 12 * 100);
+    const bname = r.broker.length > 30 ? r.broker.substring(0, 28) + '…' : r.broker;
+    const cname = (r.comercial || '').split('@')[0];
+    return `<tr class="${rc}">
+      <td class="col-rank">${rank}</td>
+      <td class="col-broker" style="font-size:12px" title="${r.broker}">${bname}</td>
+      <td class="col-com"><span class="b-com" title="${r.comercial}">${cname}</span></td>
+      <td class="col-num" style="font-weight:600;text-align:center">${Math.round(r.cierres_acum)}</td>
+      <td class="col-num" style="text-align:center">${Math.round(r.visitas_acum)}</td>
+      <td class="col-prog">
+        <div class="pbar-row">
+          <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
+          <span class="pbar-label">${visRest}/12</span>
+        </div>
+      </td>
+      <td class="col-boleta" style="text-align:center">
+        <span class="badge ${bc}"><i class="ti ti-ticket" style="font-size:11px"></i> ${Math.round(r.boletas_acumuladas)}</span>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderChart(d) {
+  const top = d.slice(0, 20);
+  const wrap = document.getElementById('chart-wrap');
+  wrap.style.height = Math.max(240, top.length * 42 + 60) + 'px';
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+  chartInst = new Chart(document.getElementById('bChart'), {
+    type: 'bar',
+    data: {
+      labels: top.map(r => r.broker.split('@')[0]),
+      datasets: [
+        { label: 'Boletas', data: top.map(r => Math.round(r.boletas_acumuladas)), backgroundColor: '#534AB7', borderRadius: 4 },
+        { label: 'Cierres acum.', data: top.map(r => Math.round(r.cierres_acum)), backgroundColor: '#EF9F27', borderRadius: 4 }
+      ]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        y: { ticks: { font: { size: 12 } } }
+      }
+    }
+  });
+}
+
+function setTab(tab, el) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-ranking').style.display = tab === 'ranking' ? 'block' : 'none';
+  document.getElementById('tab-chart').style.display = tab === 'chart' ? 'block' : 'none';
+  if (tab === 'chart') renderChart(getFiltered());
+}
+
+loadData();
+</script>
+</body>
+</html>
