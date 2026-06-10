@@ -1,0 +1,24 @@
+name: Actualizar datos Modo Mundial
+
+on:
+  schedule:
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Descargar CSV desde Google Sheets
+        run: |
+          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vRRYkv_guEb8u_EnH2g-jQ7ZeqSAdK7DFvwdyVBqO8m8bLT5tbzsBg_KZqzPZoacQlAADyLOegfkTeO/pub?gid=1322075326&single=true&output=csv" -o datos_mundial.csv
+
+      - name: Commit y push del CSV
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add datos_mundial.csv
+          git diff --staged --quiet || git commit -m "Actualizar datos Modo Mundial"
+          git push
