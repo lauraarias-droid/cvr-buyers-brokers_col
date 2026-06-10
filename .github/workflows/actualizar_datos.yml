@@ -2,20 +2,19 @@ name: Actualizar datos Modo Mundial
 
 on:
   schedule:
-    - cron: '0 14 * * *'
-    - cron: '0 23 * * *'
+    - cron: '0 14 * * *'   # 9am Colombia (UTC-5)
+    - cron: '0 23 * * *'   # 6pm Colombia (UTC-5)
   workflow_dispatch:
-
 
 jobs:
   actualizar:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Descargar CSV desde Google Sheets
         run: |
-          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vRRYkv_guEb8u_EnH2g-jQ7ZeqSAdK7DFvwdyVBqO8m8bLT5tbzsBg_KZqzPZoacQlAADyLOegfkTeO/pub?gid=1322075326&single=true&output=csv" -o datos_mundial.csv
+          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vSvRxYwynDUo1hYC16lpy31iu2VqlfQ7iEqo-s544kOGnjD5e6JYXE-gRHs3qeMXiSVwOUtSvTiwnvT/pub?gid=1041645603&single=true&output=csv" -o datos_mundial.csv
 
       - name: Commit y push del CSV
         run: |
